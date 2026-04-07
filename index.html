@@ -2,2046 +2,346 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Android Webcam - Simple Image Streaming</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salat Sedan Pro v6</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-hijri/2.1.2/moment-hijri.min.js"></script>
     <style>
-        /* Semua CSS yang sama tetap dipertahankan */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        :root {
+            --primary: #0b5351;
+            --secondary: #00302e;
+            --accent: #f1c40f;
+            --white: #ffffff;
+            --glass: rgba(255, 255, 255, 0.1);
+            --font-size: 16px;
         }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
         body {
-            background: #000;
-            color: white;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #121212;
+            color: var(--white);
+            display: flex;
+            justify-content: center;
             height: 100vh;
             overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--secondary);
+            display: flex;
+            flex-direction: column;
             position: relative;
         }
-        
-        /* Loading Screen */
-        #loadingScreen {
-            position: fixed;
+
+        /* STICKY HEADER */
+        .sticky-header {
+            position: sticky;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #111;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            z-index: 100;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
             padding: 20px;
-        }
-        
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: #4a90e2;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 30px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .loading-text {
-            font-size: 24px;
-            font-weight: 500;
-            margin-bottom: 40px;
             text-align: center;
-        }
-        
-        .loading-subtext {
-            color: #aaa;
-            text-align: center;
-            line-height: 1.5;
-            max-width: 300px;
-        }
-        
-        /* Main Menu */
-        #mainMenu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        .menu-icon {
-            font-size: 80px;
-            margin-bottom: 30px;
-        }
-        
-        .menu-title {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .menu-subtitle {
-            color: #b8c1ec;
-            text-align: center;
-            line-height: 1.5;
-            max-width: 300px;
-            margin-bottom: 40px;
-        }
-        
-        .menu-options {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .menu-btn {
-            padding: 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .menu-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-        }
-        
-        .menu-btn-primary {
-            background: #4a90e2;
-            border: none;
-        }
-        
-        .menu-btn-primary:hover {
-            background: #3a80d2;
-        }
-        
-        .btn-icon {
-            font-size: 40px;
-        }
-        
-        .btn-text {
-            font-size: 16px;
-        }
-        
-        /* Camera Screen (Untuk HP) */
-        #cameraScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: none;
-            flex-direction: column;
-        }
-        
-        /* Video Container */
-        .video-container {
-            position: relative;
-            flex: 1;
-            overflow: hidden;
-            background: #000;
-        }
-        
-        #video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            transform-origin: center center;
-        }
-        
-        /* Top Bar */
-        .top-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-            z-index: 10;
-        }
-        
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #4caf50;
-            animation: pulse 2s infinite;
-        }
-        
-        .status-dot.active { background: #4caf50; }
-        .status-dot.inactive { background: #ff4757; animation: none; }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        .status-text {
-            font-weight: 500;
-        }
-        
-        .server-info {
-            color: #aaa;
-            font-size: 14px;
-        }
-        
-        .controls-right {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .icon-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.6);
-            border: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-        
-        .icon-btn:hover {
-            background: rgba(0, 0, 0, 0.8);
-            transform: scale(1.1);
-        }
-        
-        .icon-btn svg {
-            width: 24px;
-            height: 24px;
-        }
-        
-        /* Bottom Controls */
-        .bottom-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 30px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            z-index: 10;
-        }
-        
-        .camera-switch-btn {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .camera-switch-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: scale(1.1);
-        }
-        
-        .camera-switch-btn svg {
-            width: 32px;
-            height: 32px;
-        }
-        
-        .main-controls {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        
-        .record-btn {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #ff4757;
-            border: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .record-btn.recording {
-            background: #ff4757;
-            animation: pulse-ring 2s infinite;
-        }
-        
-        .record-btn.recording::before {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 3px;
-        }
-        
-        .record-btn.recording svg {
-            display: none;
-        }
-        
-        .record-btn svg {
-            width: 32px;
-            height: 32px;
-        }
-        
-        .record-btn:hover {
-            transform: scale(1.1);
-        }
-        
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(255, 71, 87, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
-        }
-        
-        .control-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-        
-        .control-btn svg {
-            width: 24px;
-            height: 24px;
-        }
-        
-        /* Flash button styles */
-        .flash-active {
-            background: rgba(255, 235, 59, 0.3);
-            border-color: #ffeb3b;
-            color: #ffeb3b;
-        }
-        
-        .flash-active svg {
-            filter: drop-shadow(0 0 3px rgba(255, 235, 59, 0.7));
-        }
-        
-        /* Viewer Screen (Untuk Komputer) */
-        #viewerScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: none;
-            flex-direction: column;
-        }
-        
-        #viewerVideo {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #000;
-        }
-        
-        /* Connection Panel */
-        .connection-panel {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.85);
-            padding: 40px;
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
-            text-align: center;
-            min-width: 350px;
-            max-width: 90%;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        
-        .connection-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #4a90e2;
-        }
-        
-        .connection-code {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 32px;
-            letter-spacing: 5px;
-            margin: 25px 0;
-            font-weight: bold;
-            color: #4a90e2;
-            border: 2px solid rgba(74, 144, 226, 0.3);
-        }
-        
-        .connection-instructions {
-            color: #aaa;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-        
-        .connection-url {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
-            margin: 15px 0;
-            word-break: break-all;
-        }
-        
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            z-index: 1002;
-            display: none;
-            backdrop-filter: blur(10px);
-            animation: slideIn 0.3s ease;
-        }
-        
-        @keyframes slideIn {
-            from { top: 50px; opacity: 0; }
-            to { top: 100px; opacity: 1; }
-        }
-        
-        /* QR Code Styling */
-        .qr-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px 0;
-        }
-        
-        #qrCode {
-            width: 200px;
-            height: 200px;
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-        }
-        
-        /* Settings Panel */
-        #settingsPanel {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 350px;
-            height: 100%;
-            background: rgba(20, 20, 30, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 30px 25px;
-            z-index: 1001;
-            transition: right 0.3s ease;
-            overflow-y: auto;
-        }
-        
-        #settingsPanel.active {
-            right: 0;
-        }
-        
-        .settings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        .settings-title {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .close-settings {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 10px;
-        }
-        
-        .settings-section {
-            margin-bottom: 30px;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #4a90e2;
-        }
-        
-        .settings-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-        
-        .settings-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        .settings-select {
-            width: 100%;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            color: white;
-            font-size: 14px;
-        }
-        
-        .settings-select option {
-            background: #1a1a2e;
-            color: white;
-        }
-        
-        .info-text {
-            color: #aaa;
-            font-size: 12px;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        #clock { font-size: 3.2rem; font-weight: 300; display: block; }
+        .location-detail {
+            color: var(--accent);
+            font-size: 0.8rem;
             margin-top: 5px;
-            line-height: 1.4;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        
-        .copy-btn {
-            background: #4a90e2;
-            color: white;
+
+        /* SCROLL CONTENT */
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .prayer-list { padding: 10px 25px; }
+        .prayer-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: var(--font-size);
+        }
+        .prayer-item.next {
+            background: var(--glass);
+            color: var(--accent);
+            margin: 5px -25px;
+            padding: 15px 25px;
+            font-weight: bold;
+        }
+
+        .countdown-container {
+            text-align: right;
+            color: var(--accent);
+            font-size: 0.85rem;
+            padding: 10px 25px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* CALENDAR */
+        .calendar-area {
+            background: var(--primary);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 30px 30px 0 0;
+        }
+        .cal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .day-name { font-size: 0.6rem; opacity: 0.5; text-align: center; padding-bottom: 5px;}
+        .date { 
+            padding: 10px 0; border-radius: 8px; font-size: 0.9rem; text-align: center;
+            position: relative; background: rgba(255,255,255,0.03);
+        }
+        .date.today { background: var(--accent); color: #000; font-weight: bold; }
+        .date.sun { color: #ff6b6b; }
+        .hijri-mini { position: absolute; top: 2px; right: 3px; font-size: 0.5rem; opacity: 0.7; font-weight: normal; }
+        .pasaran { display: block; font-size: 0.5rem; opacity: 0.6; }
+
+        /* ICON FEATURES SECTION */
+        .feature-box {
+            background: rgba(0,0,0,0.3);
+            margin: 15px;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        /* QIBLA COMPASS */
+        .compass-wrap {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto;
+            border: 4px double var(--accent);
+            border-radius: 50%;
+            transition: transform 0.1s ease-out;
+        }
+        .compass-arrow {
+            position: absolute;
+            top: 10%; left: 50%;
+            width: 4px; height: 40%;
+            background: var(--accent);
+            transform-origin: bottom center;
+            transform: translateX(-50%);
+        }
+        .compass-arrow::after {
+            content: '▲';
+            position: absolute;
+            top: -15px; left: -6px;
+            color: var(--accent);
+        }
+
+        /* SETTINGS & THEME */
+        .settings-grid { text-align: left; font-size: 0.85rem; }
+        .settings-grid input { width: 100%; margin: 8px 0 15px; cursor: pointer;}
+        .btn-reset {
+            background: var(--accent);
             border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
-            font-size: 14px;
             width: 100%;
         }
-        
-        .copy-btn:hover {
-            background: #3a80d2;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .bottom-controls {
-                gap: 15px;
-            }
-            
-            .camera-switch-btn {
-                width: 56px;
-                height: 56px;
-            }
-            
-            .record-btn {
-                width: 70px;
-                height: 70px;
-            }
-            
-            .control-btn {
-                width: 50px;
-                height: 50px;
-            }
-            
-            #settingsPanel {
-                width: 100%;
-                right: -100%;
-            }
-            
-            .connection-panel {
-                min-width: 300px;
-                padding: 30px 20px;
-            }
-            
-            .connection-code {
-                font-size: 28px;
-                padding: 15px;
-            }
-        }
-        
-        @media (max-height: 600px) {
-            .bottom-controls {
-                padding: 15px 20px;
-            }
-        }
-        
-        /* Stream Info */
-        .stream-info {
-            position: absolute;
-            bottom: 100px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 14px;
-            max-width: 300px;
-        }
-        
-        /* Server Selection */
-        .server-selection {
-            margin: 20px 0;
-            padding: 15px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-        }
-        
-        .server-option {
+
+        .icon-nav {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-            padding: 10px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s ease;
+            justify-content: space-around;
+            padding: 15px;
+            background: var(--secondary);
+            border-top: 1px solid var(--glass);
         }
-        
-        .server-option:hover {
-            background: rgba(255,255,255,0.15);
-        }
-        
-        .server-option.active {
-            background: rgba(74, 144, 226, 0.3);
-            border: 1px solid #4a90e2;
-        }
-        
-        .server-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .server-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        
-        .server-dot.online {
-            background: #4caf50;
-            animation: pulse 2s infinite;
-        }
-        
-        .server-dot.offline {
-            background: #ff4757;
-        }
-        
-        .connection-note {
-            font-size: 12px;
-            color: #ffc107;
-            margin-top: 10px;
-            padding: 10px;
-            background: rgba(255, 193, 7, 0.1);
-            border-radius: 5px;
-        }
+        .icon-btn { font-size: 1.5rem; cursor: pointer; opacity: 0.7; transition: 0.3s; }
+        .icon-btn:hover { opacity: 1; transform: scale(1.1); color: var(--accent); }
+
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loadingScreen">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Android Webcam Streamer</div>
-        <div class="loading-subtext">Menyiapkan aplikasi...</div>
-    </div>
-    
-    <!-- Main Menu -->
-    <div id="mainMenu">
-        <div class="menu-icon">📱</div>
-        <div class="menu-title">Android Webcam Streamer</div>
-        <div class="menu-subtitle">Pilih mode perangkat Anda</div>
-        
-        <div class="menu-options">
-            <button id="phoneModeBtn" class="menu-btn menu-btn-primary">
-                <div class="btn-icon">📹</div>
-                <div class="btn-text">HP Android (Camera)</div>
-                <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Mulai streaming kamera dari HP</div>
-            </button>
-            
-            <button id="computerModeBtn" class="menu-btn">
-                <div class="btn-icon">💻</div>
-                <div class="btn-text">Komputer (Viewer)</div>
-                <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Tonton stream dari HP di komputer</div>
-            </button>
-            
-            <button id="settingsBtn" class="menu-btn">
-                <div class="btn-icon">⚙️</div>
-                <div class="btn-text">Pengaturan</div>
-            </button>
-        </div>
-    </div>
-    
-    <!-- Camera Screen (Untuk HP) -->
-    <div id="cameraScreen">
-        <div class="video-container">
-            <video id="video" autoplay playsinline></video>
-            
-            <div class="top-bar">
-                <div class="connection-status">
-                    <div class="status-dot inactive" id="statusDot"></div>
-                    <div class="status-text" id="statusText">Camera Offline</div>
-                    <div class="server-info" id="serverInfo">Server: Disconnected</div>
-                </div>
-                
-                <div class="controls-right">
-                    <button class="icon-btn" id="toggleSettings">
-                        <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="bottom-controls">
-                <button class="camera-switch-btn" id="switchCamera">
-                    <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-                
-                <div class="main-controls">
-                    <button class="control-btn" id="flashToggle">
-                        <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <button class="record-btn" id="startStreamBtn">
-                    <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Connection Panel for Phone -->
-            <div class="connection-panel" id="phoneConnectionPanel">
-                <div class="connection-title">📡 Connect to Server</div>
-                
-                <div class="server-selection">
-                    <div class="connection-instructions">Pilih server WebSocket:</div>
-                    
-                    <div class="server-option" id="serverOption1">
-                        <div class="server-status">
-                            <div class="server-dot offline" id="server1Dot"></div>
-                            <div>Server 1 (wss://websocket.adaptable.app)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="server-option" id="serverOption2">
-                        <div class="server-status">
-                            <div class="server-dot offline" id="server2Dot"></div>
-                            <div>Server 2 (wss://free.blr2.piesocket.com/v3/1)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="server-option" id="serverOption3">
-                        <div class="server-status">
-                            <div class="server-dot offline" id="server3Dot"></div>
-                            <div>Custom Server:</div>
-                        </div>
-                        <input type="text" id="customServerUrl" placeholder="wss://server.example.com" style="width: 100%; padding: 8px; margin-top: 5px; background: rgba(255,255,255,0.1); border: 1px solid #4a90e2; border-radius: 4px; color: white;">
-                    </div>
-                </div>
-                
-                <div class="connection-instructions">
-                    Setelah terhubung ke server, gunakan kode ini untuk viewer:
-                </div>
-                <div class="connection-code" id="phoneConnectionCode">ABCDEF</div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button id="connectServerBtn" class="copy-btn" style="flex: 1;">Connect to Server</button>
-                    <button id="backToMenuBtn2" class="copy-btn" style="flex: 1; background: rgba(255,255,255,0.1);">Back</button>
-                </div>
-                
-                <div class="connection-note">
-                    Catatan: Server WebSocket publik mungkin lambat. Untuk performa terbaik, gunakan server lokal.
-                </div>
-            </div>
-            
-            <!-- Stream Info -->
-            <div class="stream-info" id="streamInfo" style="display: none;">
-                <div style="font-weight: 600; margin-bottom: 5px;">Stream Status</div>
-                <div>Frames sent: <span id="frameCount">0</span></div>
-                <div>Active viewers: <span id="viewerCount">0</span></div>
-                <div>Server: <span id="connectedServer">Not connected</span></div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Viewer Screen (Untuk Komputer) -->
-    <div id="viewerScreen">
-        <div class="video-container">
-            <img id="viewerVideo" src="" alt="Stream from phone">
-            
-            <div class="top-bar">
-                <div class="connection-status">
-                    <div class="status-dot inactive" id="viewerStatusDot"></div>
-                    <div class="status-text" id="viewerStatusText">Disconnected</div>
-                    <div class="server-info" id="viewerStreamInfo">Waiting for connection...</div>
-                </div>
-                
-                <div class="controls-right">
-                    <button class="icon-btn" id="viewerSettingsBtn">
-                        <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Connection Panel for Viewer -->
-            <div class="connection-panel" id="viewerConnectionPanel">
-                <div class="connection-title">📱 Connect to Phone Stream</div>
-                
-                <div class="server-selection">
-                    <div class="connection-instructions">Pilih server WebSocket:</div>
-                    
-                    <div class="server-option" id="viewerServerOption1">
-                        <div class="server-status">
-                            <div class="server-dot offline" id="viewerServer1Dot"></div>
-                            <div>Server 1 (wss://websocket.adaptable.app)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="server-option" id="viewerServerOption2">
-                        <div class="server-status">
-                            <div class="server-dot offline" id="viewerServer2Dot"></div>
-                            <div>Server 2 (wss://free.blr2.piesocket.com/v3/1)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="server-option" id="viewerServerOption3">
-                        <div class="server-status">
-                            <div class="server-dot offline" id="viewerServer3Dot"></div>
-                            <div>Custom Server:</div>
-                        </div>
-                        <input type="text" id="viewerCustomServerUrl" placeholder="wss://server.example.com" style="width: 100%; padding: 8px; margin-top: 5px; background: rgba(255,255,255,0.1); border: 1px solid #4a90e2; border-radius: 4px; color: white;">
-                    </div>
-                </div>
-                
-                <div class="connection-instructions">
-                    Enter the 6-digit code from your phone:
-                </div>
-                <input type="text" id="viewerCodeInput" maxlength="6" placeholder="ABCDEF" style="width: 100%; padding: 15px; font-size: 20px; text-align: center; letter-spacing: 5px; background: rgba(255,255,255,0.1); border: 2px solid #4a90e2; border-radius: 8px; color: white; margin: 20px 0;">
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button id="connectViewerBtn" class="copy-btn" style="flex: 1;">Connect to Stream</button>
-                    <button id="backToMenuBtn" class="copy-btn" style="flex: 1; background: rgba(255,255,255,0.1);">Back to Menu</button>
-                </div>
-                
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <div style="font-size: 14px; color: #aaa;">Connection Status:</div>
-                    <div style="font-size: 13px; color: #ffc107;" id="viewerConnectStatus">
-                        Select server and enter code
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Stream Stats -->
-            <div class="stream-info" id="viewerStreamStats" style="display: none;">
-                <div style="font-weight: 600; margin-bottom: 5px;">Stream Info</div>
-                <div>Connected to: <span id="connectedPhoneCode">ABCDEF</span></div>
-                <div>FPS: <span id="streamFps">0</span></div>
-                <div>Last frame: <span id="lastFrameTime">0s ago</span></div>
-                <div>Server: <span id="viewerConnectedServer">Not connected</span></div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Settings Panel -->
-    <div id="settingsPanel">
-        <div class="settings-header">
-            <div class="settings-title">Settings</div>
-            <button class="close-settings" id="closeSettings">
-                <svg fill="currentColor" width="24" height="24" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                </svg>
-            </button>
-        </div>
-        
-        <div class="settings-section">
-            <div class="section-title">Device Mode</div>
-            
-            <div class="settings-item">
-                <div class="settings-label">Current Mode</div>
-                <div id="currentMode" style="padding: 10px; background: rgba(255,255,255,0.1); border-radius: 6px; margin-top: 5px;">
-                    Not selected
-                </div>
-            </div>
-            
-            <div class="settings-item">
-                <div class="settings-label">Switch Mode</div>
-                <button class="copy-btn" id="switchModeBtn" style="margin-top: 10px;">
-                    Switch to Phone Mode
-                </button>
-            </div>
-        </div>
-        
-        <div class="settings-section">
-            <div class="section-title">Stream Settings</div>
-            
-            <div class="settings-item">
-                <label class="settings-label">Image Quality</label>
-                <select class="settings-select" id="qualitySelect">
-                    <option value="0.3">Low (Faster)</option>
-                    <option value="0.6" selected>Medium (Balanced)</option>
-                    <option value="0.8">High (Better)</option>
-                    <option value="1.0">Maximum (Best)</option>
-                </select>
-            </div>
-            
-            <div class="settings-item">
-                <label class="settings-label">Frame Rate</label>
-                <select class="settings-select" id="fpsSelect">
-                    <option value="2">2 fps (Very Slow)</option>
-                    <option value="5">5 fps</option>
-                    <option value="10" selected>10 fps</option>
-                    <option value="15">15 fps</option>
-                </select>
-            </div>
-            
-            <div class="settings-item">
-                <label class="settings-label">Camera Resolution</label>
-                <select class="settings-select" id="resolutionSelect">
-                    <option value="320">320p (Very Low)</option>
-                    <option value="480" selected>480p (SD)</option>
-                    <option value="720">720p (HD)</option>
-                </select>
-                <div class="info-text">Note: Higher resolution requires more bandwidth</div>
-            </div>
-        </div>
-        
-        <div class="settings-section">
-            <div class="section-title">Connection</div>
-            
-            <div class="settings-item">
-                <div class="settings-label">Stream Code</div>
-                <div class="connection-url" id="settingsStreamCode">ABCDEF</div>
-                <button class="copy-btn" id="copySettingsCodeBtn">Copy Code</button>
-            </div>
-            
-            <div class="settings-item">
-                <div class="settings-label">Server URL</div>
-                <div class="connection-url" id="settingsServerUrl">
-                    Not connected
-                </div>
-                <button class="copy-btn" id="copyServerUrlBtn">Copy URL</button>
-            </div>
-        </div>
-        
-        <button id="restartStreamBtn" class="copy-btn" style="background: #4a90e2; margin-top: 20px;">
-            Restart Stream
-        </button>
-        
-        <button id="disconnectBtn" class="copy-btn" style="background: rgba(255,255,255,0.1); margin-top: 10px;">
-            Disconnect
-        </button>
-    </div>
-    
-    <!-- Notification -->
-    <div class="notification" id="notification"></div>
 
-    <script>
-        // State Management
-        let state = {
-            mode: null, // 'phone' or 'viewer'
-            isStreaming: false,
-            localStream: null,
-            currentCamera: 'user',
-            isFlashOn: false,
-            streamCode: null,
-            wsConnection: null,
-            selectedServer: null,
-            streamSettings: {
-                quality: 0.6,
-                fps: 10,
-                resolution: 480
-            },
-            frameCount: 0,
-            viewerCount: 0,
-            lastFrameTime: 0,
-            frameInterval: null,
-            imageCapture: null,
-            viewerCheckInterval: null
-        };
+<div class="container">
+    <div class="sticky-header">
+        <span id="clock">00:00:00</span>
+        <div class="location-detail" id="full-address">Mendeteksi Sedan...</div>
+    </div>
+
+    <div class="scrollable-content">
+        <div class="prayer-list" id="prayer-content"></div>
+        <div class="countdown-container" id="cd-text"></div>
+
+        <div class="calendar-area">
+            <div class="cal-header">
+                <span onclick="moveMonth(-1)" style="cursor:pointer">❮</span>
+                <span id="masehi-month">...</span>
+                <span onclick="moveMonth(1)" style="cursor:pointer">❯</span>
+            </div>
+            <div class="grid" id="calendar-grid"></div>
+        </div>
+
+        <div class="feature-box" id="section-qibla">
+            <h4 style="margin-bottom:15px">🧭 Kompas Kiblat Aktif</h4>
+            <div class="compass-wrap" id="compass">
+                <div class="compass-arrow"></div>
+            </div>
+            <p style="font-size: 0.7rem; margin-top: 10px; opacity: 0.6;">Arahkan HP Anda untuk mencari kiblat</p>
+        </div>
+
+        <div class="feature-box" id="section-settings">
+            <h4 style="margin-bottom:15px">⚙️ Pengaturan & Tema</h4>
+            <div class="settings-grid">
+                <label>Ukuran Font Jadwal:</label>
+                <input type="range" min="12" max="24" value="16" oninput="changeFontSize(this.value)">
+                
+                <label>Warna Tema:</label>
+                <input type="color" id="colorPicker" onchange="changeTheme(this.value)">
+                
+                <button class="btn-reset" onclick="resetDefault()">Reset ke Default Sedan</button>
+            </div>
+        </div>
+
+        <div class="feature-box" id="section-dev">
+            <h4>👨‍💻 Developer Info</h4>
+            <p style="font-size: 0.8rem; margin-top:10px">Sedan Precision App v6.0</p>
+            <p style="font-size: 0.7rem; opacity: 0.6">Optimized for Kedungringin, Rembang</p>
+        </div>
+    </div>
+
+    <div class="icon-nav">
+        <div class="icon-btn" onclick="document.getElementById('section-qibla').scrollIntoView({behavior:'smooth'})">🧭</div>
+        <div class="icon-btn" onclick="document.getElementById('section-settings').scrollIntoView({behavior:'smooth'})">⚙️</div>
+        <div class="icon-btn" onclick="document.getElementById('section-dev').scrollIntoView({behavior:'smooth'})">🆔</div>
+        <div class="icon-btn" onclick="location.reload()">🔄</div>
+    </div>
+</div>
+
+<script>
+    let viewDate = new Date();
+    let currentPrayerTimes = [];
+    let nextPrayerInfo = null;
+    const DEFAULT_COLOR = "#0b5351";
+
+    function updateLive() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
         
-        // WebSocket servers (public test servers)
-        const webSocketServers = [
-            {
-                id: 'server1',
-                name: 'Server 1',
-                url: 'wss://websocket.adaptable.app',
-                description: 'Public WebSocket server'
-            },
-            {
-                id: 'server2',
-                name: 'Server 2',
-                url: 'wss://free.blr2.piesocket.com/v3/1',
-                description: 'PieSocket Free Tier'
-            },
-            {
-                id: 'server3',
-                name: 'Custom Server',
-                url: '',
-                description: 'Custom WebSocket server'
-            }
-        ];
-        
-        // DOM Elements
-        const loadingScreen = document.getElementById('loadingScreen');
-        const mainMenu = document.getElementById('mainMenu');
-        const cameraScreen = document.getElementById('cameraScreen');
-        const viewerScreen = document.getElementById('viewerScreen');
-        const settingsPanel = document.getElementById('settingsPanel');
-        const notification = document.getElementById('notification');
-        
-        // Video Elements
-        const video = document.getElementById('video');
-        const viewerVideo = document.getElementById('viewerVideo');
-        
-        // Menu Buttons
-        const phoneModeBtn = document.getElementById('phoneModeBtn');
-        const computerModeBtn = document.getElementById('computerModeBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
-        
-        // Phone Elements
-        const switchCamera = document.getElementById('switchCamera');
-        const flashToggle = document.getElementById('flashToggle');
-        const startStreamBtn = document.getElementById('startStreamBtn');
-        const toggleSettings = document.getElementById('toggleSettings');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const serverInfo = document.getElementById('serverInfo');
-        const phoneConnectionPanel = document.getElementById('phoneConnectionPanel');
-        const phoneConnectionCode = document.getElementById('phoneConnectionCode');
-        const connectServerBtn = document.getElementById('connectServerBtn');
-        const backToMenuBtn2 = document.getElementById('backToMenuBtn2');
-        const frameCount = document.getElementById('frameCount');
-        const viewerCount = document.getElementById('viewerCount');
-        const streamInfo = document.getElementById('streamInfo');
-        const connectedServer = document.getElementById('connectedServer');
-        
-        // Server selection elements
-        const serverOption1 = document.getElementById('serverOption1');
-        const serverOption2 = document.getElementById('serverOption2');
-        const serverOption3 = document.getElementById('serverOption3');
-        const server1Dot = document.getElementById('server1Dot');
-        const server2Dot = document.getElementById('server2Dot');
-        const server3Dot = document.getElementById('server3Dot');
-        const customServerUrl = document.getElementById('customServerUrl');
-        
-        // Viewer Elements
-        const viewerStatusDot = document.getElementById('viewerStatusDot');
-        const viewerStatusText = document.getElementById('viewerStatusText');
-        const viewerStreamInfo = document.getElementById('viewerStreamInfo');
-        const viewerSettingsBtn = document.getElementById('viewerSettingsBtn');
-        const viewerConnectionPanel = document.getElementById('viewerConnectionPanel');
-        const viewerCodeInput = document.getElementById('viewerCodeInput');
-        const connectViewerBtn = document.getElementById('connectViewerBtn');
-        const backToMenuBtn = document.getElementById('backToMenuBtn');
-        const viewerConnectStatus = document.getElementById('viewerConnectStatus');
-        const viewerStreamStats = document.getElementById('viewerStreamStats');
-        const connectedPhoneCode = document.getElementById('connectedPhoneCode');
-        const streamFps = document.getElementById('streamFps');
-        const lastFrameTime = document.getElementById('lastFrameTime');
-        const viewerConnectedServer = document.getElementById('viewerConnectedServer');
-        
-        // Viewer server selection elements
-        const viewerServerOption1 = document.getElementById('viewerServerOption1');
-        const viewerServerOption2 = document.getElementById('viewerServerOption2');
-        const viewerServerOption3 = document.getElementById('viewerServerOption3');
-        const viewerServer1Dot = document.getElementById('viewerServer1Dot');
-        const viewerServer2Dot = document.getElementById('viewerServer2Dot');
-        const viewerServer3Dot = document.getElementById('viewerServer3Dot');
-        const viewerCustomServerUrl = document.getElementById('viewerCustomServerUrl');
-        
-        // Settings Elements
-        const closeSettings = document.getElementById('closeSettings');
-        const currentMode = document.getElementById('currentMode');
-        const switchModeBtn = document.getElementById('switchModeBtn');
-        const restartStreamBtn = document.getElementById('restartStreamBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const qualitySelect = document.getElementById('qualitySelect');
-        const fpsSelect = document.getElementById('fpsSelect');
-        const resolutionSelect = document.getElementById('resolutionSelect');
-        const settingsStreamCode = document.getElementById('settingsStreamCode');
-        const settingsServerUrl = document.getElementById('settingsServerUrl');
-        const copySettingsCodeBtn = document.getElementById('copySettingsCodeBtn');
-        const copyServerUrlBtn = document.getElementById('copyServerUrlBtn');
-        
-        // Generate unique stream code
-        function generateStreamCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
+        if (nextPrayerInfo) {
+            const nowMoment = moment();
+            let targetMoment = moment(nextPrayerInfo.time, "HH:mm");
+            if (targetMoment.isBefore(nowMoment)) targetMoment.add(1, 'days');
+            const duration = moment.duration(targetMoment.diff(nowMoment));
+            const timer = [Math.floor(duration.asHours()), duration.minutes(), duration.seconds()]
+                          .map(v => String(v).padStart(2, '0')).join(':');
+            document.getElementById('cd-text').innerText = `${nextPrayerInfo.name} -${timer}`;
         }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Generate stream code
-            state.streamCode = generateStreamCode();
-            
-            // Hide loading screen after 2 seconds
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                mainMenu.style.display = 'flex';
-            }, 2000);
-            
-            // Setup event listeners
-            setupEventListeners();
-            
-            // Check URL parameters
-            checkUrlParameters();
-            
-            // Test WebSocket servers
-            testWebSocketServers();
+    }
+    setInterval(updateLive, 1000);
+
+    // KIBLAT BERDASARKAN ROTASI HP
+    window.addEventListener('deviceorientation', function(event) {
+        if (event.webkitCompassHeading) {
+            // Untuk iOS
+            let heading = event.webkitCompassHeading;
+            // Kiblat dari Rembang sekitar 294 derajat
+            document.getElementById('compass').style.transform = `rotate(${-heading + 294}deg)`;
+        } else if (event.alpha) {
+            // Untuk Android
+            let heading = event.alpha;
+            document.getElementById('compass').style.transform = `rotate(${heading + 294}deg)`;
+        }
+    }, true);
+
+    async function init() {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            try {
+                const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`);
+                const res = await geo.json();
+                const a = res.address;
+                const desa = a.village || a.suburb || "Kedungringin";
+                const kec = (a.city_district && !a.city_district.includes("Rembang")) ? a.city_district : "Sedan";
+                const kab = a.city || a.regency || "Rembang";
+                document.getElementById('full-address').innerText = `Desa ${desa}, Kec. ${kec}, Kab. ${kab}`;
+            } catch(e) {
+                document.getElementById('full-address').innerText = "Desa Kedungringin, Kec. Sedan, Kab. Rembang";
+            }
+
+            const dateStr = moment().format('DD-MM-YYYY');
+            const pRes = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=11`);
+            const pData = await pRes.json();
+            const t = pData.data.timings;
+            const dhuha = moment(t.Sunrise, "HH:mm").add(15, 'minutes').format("HH:mm");
+
+            currentPrayerTimes = [
+                {name:'Dhuhur', time:t.Dhuhr}, {name:'Ashar', time:t.Asr}, 
+                {name:'Maghrib', time:t.Maghrib}, {name:'Isya', time:t.Isha}, 
+                {name:'Imsak', time:t.Imsak}, {name:'Subuh', time:t.Fajr}, 
+                {name:'Terbit', time:t.Sunrise}, {name:'Dhuha', time:dhuha}
+            ];
+            renderPrayers();
         });
-        
-        // Setup event listeners
-        function setupEventListeners() {
-            // Menu buttons
-            phoneModeBtn.addEventListener('click', () => startPhoneMode());
-            computerModeBtn.addEventListener('click', () => startViewerMode());
-            settingsBtn.addEventListener('click', () => {
-                settingsPanel.classList.add('active');
-                updateSettingsPanel();
-            });
-            
-            // Phone camera controls
-            switchCamera.addEventListener('click', switchPhoneCamera);
-            flashToggle.addEventListener('click', togglePhoneFlash);
-            startStreamBtn.addEventListener('click', togglePhoneStream);
-            toggleSettings.addEventListener('click', () => {
-                settingsPanel.classList.add('active');
-                updateSettingsPanel();
-            });
-            connectServerBtn.addEventListener('click', connectToServer);
-            backToMenuBtn2.addEventListener('click', () => {
-                cameraScreen.style.display = 'none';
-                mainMenu.style.display = 'flex';
-            });
-            
-            // Server selection
-            serverOption1.addEventListener('click', () => selectServer('server1'));
-            serverOption2.addEventListener('click', () => selectServer('server2'));
-            serverOption3.addEventListener('click', () => selectServer('server3'));
-            
-            viewerServerOption1.addEventListener('click', () => selectViewerServer('server1'));
-            viewerServerOption2.addEventListener('click', () => selectViewerServer('server2'));
-            viewerServerOption3.addEventListener('click', () => selectViewerServer('server3'));
-            
-            // Viewer controls
-            viewerSettingsBtn.addEventListener('click', () => {
-                settingsPanel.classList.add('active');
-                updateSettingsPanel();
-            });
-            connectViewerBtn.addEventListener('click', connectViewerToStream);
-            backToMenuBtn.addEventListener('click', () => {
-                viewerScreen.style.display = 'none';
-                mainMenu.style.display = 'flex';
-            });
-            
-            // Settings buttons
-            closeSettings.addEventListener('click', () => settingsPanel.classList.remove('active'));
-            switchModeBtn.addEventListener('click', switchMode);
-            restartStreamBtn.addEventListener('click', restartStream);
-            disconnectBtn.addEventListener('click', disconnect);
-            copySettingsCodeBtn.addEventListener('click', () => copyToClipboard(state.streamCode, 'Stream code copied!'));
-            copyServerUrlBtn.addEventListener('click', () => {
-                if (state.selectedServer) {
-                    copyToClipboard(state.selectedServer.url, 'Server URL copied!');
-                }
-            });
-            
-            // Settings changes
-            qualitySelect.addEventListener('change', (e) => {
-                state.streamSettings.quality = parseFloat(e.target.value);
-            });
-            
-            fpsSelect.addEventListener('change', (e) => {
-                state.streamSettings.fps = parseInt(e.target.value);
-                if (state.mode === 'phone' && state.isStreaming) {
-                    restartFrameCapture();
-                }
-            });
-            
-            resolutionSelect.addEventListener('change', (e) => {
-                state.streamSettings.resolution = parseInt(e.target.value);
-                if (state.mode === 'phone' && state.isStreaming) {
-                    restartPhoneStream();
-                }
-            });
-            
-            // Close settings on outside click
-            settingsPanel.addEventListener('click', (e) => {
-                if (e.target === settingsPanel) {
-                    settingsPanel.classList.remove('active');
-                }
-            });
-        }
-        
-        // Test WebSocket servers
-        async function testWebSocketServers() {
-            // Test Server 1
-            testWebSocketConnection(webSocketServers[0].url, server1Dot, viewerServer1Dot);
-            
-            // Test Server 2
-            testWebSocketConnection(webSocketServers[1].url, server2Dot, viewerServer2Dot);
-            
-            // Server 3 is custom, so we don't test it
-            server3Dot.className = 'server-dot offline';
-            viewerServer3Dot.className = 'server-dot offline';
-        }
-        
-        // Test a WebSocket connection
-        function testWebSocketConnection(url, dotElement, viewerDotElement) {
-            try {
-                const ws = new WebSocket(url);
-                
-                ws.onopen = () => {
-                    dotElement.className = 'server-dot online';
-                    if (viewerDotElement) {
-                        viewerDotElement.className = 'server-dot online';
-                    }
-                    ws.close();
-                };
-                
-                ws.onerror = () => {
-                    dotElement.className = 'server-dot offline';
-                    if (viewerDotElement) {
-                        viewerDotElement.className = 'server-dot offline';
-                    }
-                };
-                
-                // Timeout after 5 seconds
-                setTimeout(() => {
-                    if (ws.readyState !== WebSocket.OPEN) {
-                        dotElement.className = 'server-dot offline';
-                        if (viewerDotElement) {
-                            viewerDotElement.className = 'server-dot offline';
-                        }
-                        ws.close();
-                    }
-                }, 5000);
-                
-            } catch (error) {
-                dotElement.className = 'server-dot offline';
-                if (viewerDotElement) {
-                    viewerDotElement.className = 'server-dot offline';
-                }
-            }
-        }
-        
-        // Select server for phone
-        function selectServer(serverId) {
-            // Remove active class from all options
-            serverOption1.classList.remove('active');
-            serverOption2.classList.remove('active');
-            serverOption3.classList.remove('active');
-            
-            // Add active class to selected option
-            const selectedOption = document.getElementById(`serverOption${serverId.charAt(serverId.length-1)}`);
-            selectedOption.classList.add('active');
-            
-            // Store selected server
-            const server = webSocketServers.find(s => s.id === serverId);
-            state.selectedServer = server;
-            
-            // If custom server, get URL from input
-            if (serverId === 'server3') {
-                state.selectedServer.url = customServerUrl.value;
-            }
-        }
-        
-        // Select server for viewer
-        function selectViewerServer(serverId) {
-            // Remove active class from all options
-            viewerServerOption1.classList.remove('active');
-            viewerServerOption2.classList.remove('active');
-            viewerServerOption3.classList.remove('active');
-            
-            // Add active class to selected option
-            const selectedOption = document.getElementById(`viewerServerOption${serverId.charAt(serverId.length-1)}`);
-            selectedOption.classList.add('active');
-            
-            // Store selected server
-            const server = webSocketServers.find(s => s.id === serverId);
-            state.selectedServer = server;
-            
-            // If custom server, get URL from input
-            if (serverId === 'server3') {
-                state.selectedServer.url = viewerCustomServerUrl.value;
-            }
-        }
-        
-        // Check URL parameters
-        function checkUrlParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const viewCode = urlParams.get('view');
-            
-            if (viewCode && viewCode.length === 6) {
-                // Auto-start as viewer with the code
-                state.streamCode = viewCode.toUpperCase();
-                startViewerMode();
-                setTimeout(() => {
-                    viewerCodeInput.value = state.streamCode;
-                    selectViewerServer('server1');
-                    setTimeout(() => connectViewerToStream(), 500);
-                }, 1000);
-            }
-        }
-        
-        // Start phone mode
-        function startPhoneMode() {
-            state.mode = 'phone';
-            mainMenu.style.display = 'none';
-            cameraScreen.style.display = 'flex';
-            
-            // Show connection panel
-            phoneConnectionPanel.style.display = 'block';
-            streamInfo.style.display = 'none';
-            
-            // Update code display
-            phoneConnectionCode.textContent = state.streamCode;
-            
-            // Reset UI
-            statusDot.className = 'status-dot inactive';
-            statusText.textContent = 'Camera Offline';
-            serverInfo.textContent = 'Server: Disconnected';
-            
-            // Select first server by default
-            selectServer('server1');
-            
-            showNotification('Phone mode started. Connect to a server first.', 'info');
-        }
-        
-        // Connect to WebSocket server
-        function connectToServer() {
-            if (!state.selectedServer || !state.selectedServer.url) {
-                showNotification('Please select a server first', 'warning');
-                return;
-            }
-            
-            try {
-                // Close existing connection
-                if (state.wsConnection) {
-                    state.wsConnection.close();
-                }
-                
-                // Create new WebSocket connection
-                state.wsConnection = new WebSocket(state.selectedServer.url);
-                
-                // Connection opened
-                state.wsConnection.onopen = () => {
-                    showNotification('Connected to server!', 'success');
-                    
-                    // Update UI
-                    statusDot.className = 'status-dot active';
-                    statusText.textContent = 'Server Connected';
-                    serverInfo.textContent = `Server: ${state.selectedServer.name}`;
-                    connectedServer.textContent = state.selectedServer.name;
-                    
-                    // Hide connection panel
-                    phoneConnectionPanel.style.display = 'none';
-                    streamInfo.style.display = 'block';
-                    
-                    // Start camera
-                    startCamera();
-                };
-                
-                // Connection error
-                state.wsConnection.onerror = (error) => {
-                    console.error('WebSocket error:', error);
-                    showNotification('Failed to connect to server', 'error');
-                    statusDot.className = 'status-dot inactive';
-                    statusText.textContent = 'Server Error';
-                };
-                
-                // Connection closed
-                state.wsConnection.onclose = () => {
-                    console.log('WebSocket connection closed');
-                    if (state.isStreaming) {
-                        showNotification('Disconnected from server', 'warning');
-                        statusDot.className = 'status-dot inactive';
-                        statusText.textContent = 'Server Disconnected';
-                    }
-                };
-                
-                // Handle messages (for viewer count updates)
-                state.wsConnection.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data.type === 'viewer_count') {
-                            state.viewerCount = data.count;
-                            updatePhoneUI();
-                        }
-                    } catch (error) {
-                        // Not JSON or invalid data
-                    }
-                };
-                
-            } catch (error) {
-                console.error('Error connecting to WebSocket:', error);
-                showNotification('Connection error: ' + error.message, 'error');
-            }
-        }
-        
-        // Start camera
-        async function startCamera() {
-            try {
-                const constraints = {
-                    video: {
-                        facingMode: state.currentCamera,
-                        width: { ideal: state.streamSettings.resolution },
-                        height: { ideal: Math.round(state.streamSettings.resolution * 0.75) }
-                    },
-                    audio: false
-                };
-                
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                state.localStream = stream;
-                
-                // Set video source
-                video.srcObject = stream;
-                await video.play();
-                
-                // Initialize ImageCapture
-                const track = stream.getVideoTracks()[0];
-                if ('ImageCapture' in window) {
-                    state.imageCapture = new ImageCapture(track);
-                }
-                
-                // Update UI
-                statusText.textContent = 'Camera Active - Ready to Stream';
-                
-                // Update button
-                startStreamBtn.classList.remove('recording');
-                startStreamBtn.innerHTML = '<svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"></path></svg>';
-                
-                showNotification('Camera started. Click record button to start streaming.', 'success');
-                
-            } catch (error) {
-                console.error('Error starting camera:', error);
-                showNotification('Failed to start camera: ' + error.message, 'error');
-                
-                // If camera fails, still allow connection but show message
-                statusText.textContent = 'Camera Error - Check Permissions';
-            }
-        }
-        
-        // Toggle phone stream
-        function togglePhoneStream() {
-            if (!state.isStreaming) {
-                startPhoneStream();
-            } else {
-                stopPhoneStream();
-            }
-        }
-        
-        // Start phone stream
-        function startPhoneStream() {
-            if (!state.wsConnection || state.wsConnection.readyState !== WebSocket.OPEN) {
-                showNotification('Not connected to server', 'warning');
-                return;
-            }
-            
-            if (!state.localStream) {
-                showNotification('Camera not started', 'warning');
-                return;
-            }
-            
-            state.isStreaming = true;
-            
-            // Send stream start message
-            const startMessage = {
-                type: 'stream_start',
-                code: state.streamCode,
-                settings: state.streamSettings
-            };
-            
-            state.wsConnection.send(JSON.stringify(startMessage));
-            
-            // Start capturing frames
-            startFrameCapture();
-            
-            // Update UI
-            startStreamBtn.classList.add('recording');
-            startStreamBtn.innerHTML = '';
-            statusText.textContent = 'Streaming Active';
-            
-            showNotification('Streaming started! Code: ' + state.streamCode, 'success');
-        }
-        
-        // Start capturing frames
-        function startFrameCapture() {
-            if (state.frameInterval) {
-                clearInterval(state.frameInterval);
-            }
-            
-            const interval = 1000 / state.streamSettings.fps;
-            
-            state.frameInterval = setInterval(async () => {
-                if (!state.isStreaming || !state.wsConnection || state.wsConnection.readyState !== WebSocket.OPEN) {
-                    return;
-                }
-                
-                try {
-                    let imageData;
-                    
-                    if (state.imageCapture) {
-                        // Use ImageCapture API if available
-                        const bitmap = await state.imageCapture.grabFrame();
-                        
-                        // Create canvas to process frame
-                        const canvas = document.createElement('canvas');
-                        canvas.width = bitmap.width;
-                        canvas.height = bitmap.height;
-                        const ctx = canvas.getContext('2d');
-                        
-                        // Draw frame to canvas
-                        ctx.drawImage(bitmap, 0, 0);
-                        
-                        // Convert to data URL with compression
-                        imageData = canvas.toDataURL('image/jpeg', state.streamSettings.quality);
-                    } else {
-                        // Fallback: capture from video element
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth || 640;
-                        canvas.height = video.videoHeight || 480;
-                        const ctx = canvas.getContext('2d');
-                        
-                        // Draw video frame to canvas
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        
-                        // Convert to data URL with compression
-                        imageData = canvas.toDataURL('image/jpeg', state.streamSettings.quality);
-                    }
-                    
-                    // Send frame via WebSocket
-                    const frameMessage = {
-                        type: 'frame',
-                        code: state.streamCode,
-                        frame: imageData,
-                        timestamp: Date.now()
-                    };
-                    
-                    state.wsConnection.send(JSON.stringify(frameMessage));
-                    
-                    // Update frame count
-                    state.frameCount++;
-                    updatePhoneUI();
-                    
-                } catch (error) {
-                    console.error('Error capturing frame:', error);
-                    // Try to restart capture on error
-                    if (state.frameInterval) {
-                        clearInterval(state.frameInterval);
-                    }
-                    setTimeout(() => startFrameCapture(), 1000);
-                }
-            }, interval);
-        }
-        
-        // Restart frame capture
-        function restartFrameCapture() {
-            if (state.frameInterval) {
-                clearInterval(state.frameInterval);
-            }
-            startFrameCapture();
-        }
-        
-        // Update phone UI
-        function updatePhoneUI() {
-            frameCount.textContent = state.frameCount;
-            viewerCount.textContent = state.viewerCount;
-            serverInfo.textContent = `Server: ${state.selectedServer?.name || 'None'} | Viewers: ${state.viewerCount}`;
-        }
-        
-        // Switch phone camera
-        async function switchPhoneCamera() {
-            if (!state.localStream) return;
-            
-            state.currentCamera = state.currentCamera === 'user' ? 'environment' : 'user';
-            
-            try {
-                // Stop current stream
-                state.localStream.getTracks().forEach(track => track.stop());
-                
-                // Restart camera
-                await startCamera();
-                
-                // Restart stream if it was running
-                if (state.isStreaming) {
-                    startPhoneStream();
-                }
-                
-                showNotification(`Switched to ${state.currentCamera === 'user' ? 'front' : 'back'} camera`, 'success');
-                
-            } catch (error) {
-                console.error('Error switching camera:', error);
-                showNotification('Failed to switch camera', 'error');
-            }
-        }
-        
-        // Toggle phone flash
-        async function togglePhoneFlash() {
-            if (!state.localStream) return;
-            
-            state.isFlashOn = !state.isFlashOn;
-            
-            try {
-                const videoTrack = state.localStream.getVideoTracks()[0];
-                if (videoTrack && typeof videoTrack.applyConstraints === 'function') {
-                    await videoTrack.applyConstraints({
-                        advanced: [{ torch: state.isFlashOn }]
-                    });
-                    
-                    // Update button style
-                    flashToggle.classList.toggle('flash-active', state.isFlashOn);
-                    showNotification(`Flash ${state.isFlashOn ? 'ON' : 'OFF'}`, 'success');
-                }
-            } catch (error) {
-                console.log('Flash not supported');
-                state.isFlashOn = false;
-            }
-        }
-        
-        // Stop phone stream
-        function stopPhoneStream() {
-            state.isStreaming = false;
-            
-            if (state.frameInterval) {
-                clearInterval(state.frameInterval);
-                state.frameInterval = null;
-            }
-            
-            // Send stop message
-            if (state.wsConnection && state.wsConnection.readyState === WebSocket.OPEN) {
-                const stopMessage = {
-                    type: 'stream_stop',
-                    code: state.streamCode
-                };
-                state.wsConnection.send(JSON.stringify(stopMessage));
-            }
-            
-            // Update UI
-            startStreamBtn.classList.remove('recording');
-            startStreamBtn.innerHTML = '<svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"></path></svg>';
-            statusText.textContent = 'Camera Active - Ready to Stream';
-            
-            showNotification('Streaming stopped', 'info');
-        }
-        
-        // Restart phone stream
-        function restartPhoneStream() {
-            if (state.isStreaming) {
-                stopPhoneStream();
-                setTimeout(() => startPhoneStream(), 500);
-            }
-        }
-        
-        // Start viewer mode
-        function startViewerMode() {
-            state.mode = 'viewer';
-            mainMenu.style.display = 'none';
-            viewerScreen.style.display = 'flex';
-            
-            // Show connection panel
-            viewerConnectionPanel.style.display = 'block';
-            viewerStreamStats.style.display = 'none';
-            
-            // Reset UI
-            viewerStatusDot.className = 'status-dot inactive';
-            viewerStatusText.textContent = 'Disconnected';
-            viewerStreamInfo.textContent = 'Waiting for connection...';
-            
-            // Select first server by default
-            selectViewerServer('server1');
-            
-            showNotification('Viewer mode started. Select server and enter stream code.', 'info');
-        }
-        
-        // Connect viewer to stream
-        function connectViewerToStream() {
-            const code = viewerCodeInput.value.trim().toUpperCase();
-            
-            if (!code || code.length !== 6) {
-                showNotification('Please enter a valid 6-character code', 'warning');
-                return;
-            }
-            
-            if (!state.selectedServer || !state.selectedServer.url) {
-                showNotification('Please select a server first', 'warning');
-                return;
-            }
-            
-            try {
-                // Close existing connection
-                if (state.wsConnection) {
-                    state.wsConnection.close();
-                }
-                
-                // Create new WebSocket connection
-                state.wsConnection = new WebSocket(state.selectedServer.url);
-                
-                // Connection opened
-                state.wsConnection.onopen = () => {
-                    showNotification('Connected to server!', 'success');
-                    
-                    // Update UI
-                    viewerStatusDot.className = 'status-dot active';
-                    viewerStatusText.textContent = 'Server Connected';
-                    viewerStreamInfo.textContent = `Server: ${state.selectedServer.name}`;
-                    viewerConnectedServer.textContent = state.selectedServer.name;
-                    
-                    // Send join request
-                    const joinMessage = {
-                        type: 'viewer_join',
-                        code: code
-                    };
-                    
-                    state.wsConnection.send(JSON.stringify(joinMessage));
-                    
-                    viewerConnectStatus.textContent = 'Joining stream...';
-                    viewerConnectStatus.style.color = '#ffc107';
-                };
-                
-                // Connection error
-                state.wsConnection.onerror = (error) => {
-                    console.error('WebSocket error:', error);
-                    showNotification('Failed to connect to server', 'error');
-                    viewerStatusDot.className = 'status-dot inactive';
-                    viewerStatusText.textContent = 'Server Error';
-                    viewerConnectStatus.textContent = 'Connection failed';
-                    viewerConnectStatus.style.color = '#ff4757';
-                };
-                
-                // Connection closed
-                state.wsConnection.onclose = () => {
-                    console.log('WebSocket connection closed');
-                    viewerStatusDot.className = 'status-dot inactive';
-                    viewerStatusText.textContent = 'Disconnected';
-                    viewerConnectStatus.textContent = 'Disconnected from server';
-                    viewerConnectStatus.style.color = '#ff4757';
-                };
-                
-                // Handle messages
-                state.wsConnection.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        
-                        if (data.type === 'frame') {
-                            // Received a frame
-                            viewerVideo.src = data.frame;
-                            state.lastFrameTime = Date.now();
-                            
-                            // Update stats
-                            updateViewerStats();
-                            
-                            // Update connection status
-                            viewerConnectStatus.textContent = 'Receiving stream...';
-                            viewerConnectStatus.style.color = '#4caf50';
-                            
-                            // Show stats panel
-                            viewerConnectionPanel.style.display = 'none';
-                            viewerStreamStats.style.display = 'block';
-                            
-                            connectedPhoneCode.textContent = code;
-                            
-                        } else if (data.type === 'stream_not_found') {
-                            viewerConnectStatus.textContent = 'Stream not found. Check code.';
-                            viewerConnectStatus.style.color = '#ff4757';
-                            
-                        } else if (data.type === 'stream_stopped') {
-                            viewerConnectStatus.textContent = 'Stream stopped by sender';
-                            viewerConnectStatus.style.color = '#ff4757';
-                            
-                        } else if (data.type === 'viewer_count') {
-                            // Viewer count update
-                            state.viewerCount = data.count;
-                        }
-                        
-                    } catch (error) {
-                        console.error('Error parsing message:', error);
-                    }
-                };
-                
-            } catch (error) {
-                console.error('Error connecting to WebSocket:', error);
-                showNotification('Connection error: ' + error.message, 'error');
-            }
-        }
-        
-        // Update viewer stats
-        function updateViewerStats() {
-            // Calculate FPS
-            const now = Date.now();
-            if (!state.lastFrameTimes) {
-                state.lastFrameTimes = [];
-            }
-            
-            state.lastFrameTimes.push(now);
-            
-            // Keep only last 10 frame times
-            if (state.lastFrameTimes.length > 10) {
-                state.lastFrameTimes.shift();
-            }
-            
-            // Calculate FPS
-            if (state.lastFrameTimes.length > 1) {
-                const timeDiff = (state.lastFrameTimes[state.lastFrameTimes.length - 1] - state.lastFrameTimes[0]) / 1000;
-                const fps = (state.lastFrameTimes.length - 1) / timeDiff;
-                streamFps.textContent = fps.toFixed(1);
-            }
-            
-            // Update last frame time
-            const secondsAgo = Math.round((Date.now() - state.lastFrameTime) / 1000);
-            lastFrameTime.textContent = `${secondsAgo}s ago`;
-            
-            // Update connection status based on last frame time
-            if (secondsAgo > 5) {
-                viewerStatusText.textContent = 'No signal';
-                viewerStatusDot.className = 'status-dot inactive';
-            } else {
-                viewerStatusText.textContent = 'Receiving stream';
-                viewerStatusDot.className = 'status-dot active';
-            }
-        }
-        
-        // Update settings panel
-        function updateSettingsPanel() {
-            currentMode.textContent = state.mode === 'phone' ? 'Phone (Camera)' : 
-                                     state.mode === 'viewer' ? 'Computer (Viewer)' : 'Not selected';
-            
-            switchModeBtn.textContent = state.mode === 'phone' ? 'Switch to Viewer Mode' : 'Switch to Phone Mode';
-            
-            // Update stream code
-            settingsStreamCode.textContent = state.streamCode;
-            
-            // Update server URL
-            if (state.selectedServer && state.selectedServer.url) {
-                settingsServerUrl.textContent = state.selectedServer.url;
-            } else {
-                settingsServerUrl.textContent = 'Not connected';
-            }
-            
-            // Update settings values
-            qualitySelect.value = state.streamSettings.quality.toString();
-            fpsSelect.value = state.streamSettings.fps.toString();
-            resolutionSelect.value = state.streamSettings.resolution.toString();
-        }
-        
-        // Switch mode
-        function switchMode() {
-            if (state.mode === 'phone' && state.isStreaming) {
-                stopPhoneStream();
-            }
-            
-            if (state.mode === 'viewer') {
-                if (state.wsConnection) {
-                    state.wsConnection.close();
-                    state.wsConnection = null;
-                }
-                viewerScreen.style.display = 'none';
-            } else if (state.mode === 'phone') {
-                if (state.wsConnection) {
-                    state.wsConnection.close();
-                    state.wsConnection = null;
-                }
-                cameraScreen.style.display = 'none';
-            }
-            
-            state.mode = state.mode === 'phone' ? 'viewer' : 'phone';
-            
-            settingsPanel.classList.remove('active');
-            
-            if (state.mode === 'phone') {
-                startPhoneMode();
-            } else {
-                startViewerMode();
-            }
-        }
-        
-        // Restart stream
-        function restartStream() {
-            if (state.mode === 'phone' && state.isStreaming) {
-                stopPhoneStream();
-                setTimeout(() => startPhoneStream(), 500);
-            } else if (state.mode === 'viewer') {
-                if (state.wsConnection) {
-                    state.wsConnection.close();
-                    state.wsConnection = null;
-                }
-                setTimeout(() => connectViewerToStream(), 500);
-            }
-            
-            settingsPanel.classList.remove('active');
-            showNotification('Restarting...', 'info');
-        }
-        
-        // Disconnect
-        function disconnect() {
-            if (state.mode === 'phone' && state.isStreaming) {
-                stopPhoneStream();
-            }
-            
-            if (state.wsConnection) {
-                state.wsConnection.close();
-                state.wsConnection = null;
-            }
-            
-            if (state.mode === 'viewer') {
-                viewerScreen.style.display = 'none';
-                mainMenu.style.display = 'flex';
-            } else if (state.mode === 'phone') {
-                cameraScreen.style.display = 'none';
-                mainMenu.style.display = 'flex';
-            }
-            
-            settingsPanel.classList.remove('active');
-            showNotification('Disconnected', 'info');
-        }
-        
-        // Copy to clipboard
-        async function copyToClipboard(text, successMessage) {
-            try {
-                await navigator.clipboard.writeText(text);
-                showNotification(successMessage, 'success');
-            } catch (err) {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showNotification(successMessage, 'success');
-            }
-        }
-        
-        // Show notification
-        function showNotification(message, type = 'info') {
-            notification.textContent = message;
-            notification.style.display = 'block';
-            
-            switch (type) {
-                case 'success':
-                    notification.style.background = 'rgba(46, 204, 113, 0.9)';
-                    break;
-                case 'error':
-                    notification.style.background = 'rgba(231, 76, 60, 0.9)';
-                    break;
-                case 'warning':
-                    notification.style.background = 'rgba(241, 196, 15, 0.9)';
-                    break;
-                default:
-                    notification.style.background = 'rgba(0, 0, 0, 0.8)';
-            }
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-        
-        // Handle page unload
-        window.addEventListener('beforeunload', () => {
-            if (state.localStream) {
-                state.localStream.getTracks().forEach(track => track.stop());
-            }
-            
-            if (state.frameInterval) {
-                clearInterval(state.frameInterval);
-            }
-            
-            if (state.wsConnection) {
-                state.wsConnection.close();
-            }
-            
-            if (state.viewerCheckInterval) {
-                clearInterval(state.viewerCheckInterval);
-            }
+    }
+
+    function renderPrayers() {
+        const nowStr = moment().format('HH:mm');
+        const sorted = [...currentPrayerTimes].sort((a,b) => a.time.localeCompare(b.time));
+        nextPrayerInfo = sorted.find(p => p.time > nowStr) || sorted.find(p => p.name === 'Imsak');
+        let html = '';
+        currentPrayerTimes.forEach(p => {
+            const isNext = nextPrayerInfo && p.name === nextPrayerInfo.name;
+            html += `<div class="prayer-item ${isNext?'next':''}"><span>${p.name}</span><span>${p.time} WIB</span></div>`;
         });
-    </script>
+        document.getElementById('prayer-content').innerHTML = html;
+    }
+
+    function renderCal() {
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        const m = viewDate.getMonth(), y = viewDate.getFullYear();
+        document.getElementById('masehi-month').innerText = moment(viewDate).format('MMMM YYYY');
+        ['AHAD','SEN','SEL','RAB','KAM','JUM','SAB'].forEach(d => grid.innerHTML += `<div class="day-name">${d}</div>`);
+        const first = new Date(y, m, 1).getDay();
+        const last = new Date(y, m + 1, 0).getDate();
+        for(let i=0; i<first; i++) grid.innerHTML += '<div></div>';
+        for(let d=1; d<=last; d++) {
+            const dt = new Date(y, m, d);
+            const pasaranArr = ['Wage', 'Kliwon', 'Legi', 'Paing', 'Pon'];
+            const pasaran = pasaranArr[Math.floor((dt - new Date(1970, 0, 1)) / 86400000) % 5];
+            grid.innerHTML += `<div class="date ${moment().isSame(dt, 'day')?'today':''} ${dt.getDay()===0?'sun':''}">
+                                <span class="hijri-mini">${moment(dt).format('iD')}</span>${d}
+                                <span class="pasaran">${pasaran}</span></div>`;
+        }
+    }
+
+    // FUNGSI PENGATURAN
+    function changeFontSize(size) { document.documentElement.style.setProperty('--font-size', size + 'px'); }
+    function changeTheme(color) { 
+        document.documentElement.style.setProperty('--primary', color); 
+        document.getElementById('colorPicker').value = color;
+    }
+    function resetDefault() {
+        changeTheme(DEFAULT_COLOR);
+        changeFontSize(16);
+    }
+
+    function moveMonth(n) { viewDate.setMonth(viewDate.getMonth() + n); renderCal(); }
+
+    init(); renderCal(); updateLive();
+</script>
 </body>
 </html>
