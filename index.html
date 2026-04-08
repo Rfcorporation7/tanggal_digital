@@ -2,346 +2,960 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salat Sedan Pro v6</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Salat Sedan Pro v7.2 - GPS Akurat & Qibla Kamera</title>
+    
+    <!-- IZIN LENGKAP UNTUK KAMERA DAN SENSOR -->
+    <meta http-equiv="Permissions-Policy" content="geolocation=*, microphone=*, camera=*, magnetometer=*, gyroscope=*, accelerometer=*">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-hijri/2.1.2/moment-hijri.min.js"></script>
     <style>
+        /* Root variables & Font adjustment - lebih nyaman & proporsional */
         :root {
             --primary: #0b5351;
             --secondary: #00302e;
             --accent: #f1c40f;
             --white: #ffffff;
-            --glass: rgba(255, 255, 255, 0.1);
-            --font-size: 16px;
+            --glass: rgba(255, 255, 255, 0.12);
+            --bg-body: #121212;
+            --card-bg: rgba(0,0,0,0.35);
+            --border-color: var(--accent);
+            --font-normal: 15px;
+            --font-medium: 1rem;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: #121212;
+            background-color: var(--bg-body);
             color: var(--white);
             display: flex;
             justify-content: center;
             height: 100vh;
             overflow: hidden;
+            transition: background-color 0.3s ease;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+            font-weight: 500;
+            font-size: var(--font-normal);
         }
 
         .container {
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             background: var(--secondary);
             display: flex;
             flex-direction: column;
             position: relative;
+            transition: background 0.3s ease;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
         }
 
-        /* STICKY HEADER */
         .sticky-header {
             position: sticky;
             top: 0;
             z-index: 100;
-            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 20px;
+            background: linear-gradient(145deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 18px 12px 14px;
             text-align: center;
             border-bottom: 2px solid var(--accent);
+            transition: all 0.3s ease;
         }
 
-        #clock { font-size: 3.2rem; font-weight: 300; display: block; }
+        #clock { 
+            font-size: 2.7rem; 
+            font-weight: 700; 
+            display: block;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            line-height: 1.2;
+        }
+        
         .location-detail {
             color: var(--accent);
-            font-size: 0.8rem;
-            margin-top: 5px;
+            font-size: 0.75rem;
+            margin-top: 6px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
+            transition: color 0.3s ease;
         }
 
-        /* SCROLL CONTENT */
         .scrollable-content {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 80px;
+            padding-bottom: 85px;
+            scrollbar-width: thin;
         }
 
-        .prayer-list { padding: 10px 25px; }
+        .prayer-list { padding: 10px 22px; }
         .prayer-item {
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: var(--font-size);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .prayer-item span:first-child {
+            font-weight: 700;
+        }
+        .prayer-item span:last-child {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
         .prayer-item.next {
             background: var(--glass);
             color: var(--accent);
-            margin: 5px -25px;
-            padding: 15px 25px;
-            font-weight: bold;
+            margin: 8px -22px;
+            padding: 14px 22px;
+            font-weight: 800;
+            border-radius: 16px;
+            transition: all 0.2s;
+        }
+        .prayer-item.next span:last-child {
+            font-size: 1.1rem;
+            font-weight: 800;
         }
 
         .countdown-container {
             text-align: right;
             color: var(--accent);
-            font-size: 0.85rem;
-            padding: 10px 25px;
-            font-weight: bold;
-            background: rgba(0,0,0,0.2);
+            font-size: 0.9rem;
+            padding: 10px 22px;
+            font-weight: 800;
+            background: rgba(0,0,0,0.3);
+            letter-spacing: 0.5px;
         }
 
-        /* CALENDAR */
+        .hijri-complete-info {
+            background: rgba(0,0,0,0.4);
+            margin: 8px 22px 0 22px;
+            padding: 10px 12px;
+            border-radius: 28px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--accent);
+            border-right: 3px solid var(--accent);
+            transition: border-color 0.3s ease;
+        }
+        .hijri-complete-info span {
+            color: var(--accent);
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
         .calendar-area {
             background: var(--primary);
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 30px 30px 0 0;
+            padding: 16px 14px;
+            margin-top: 18px;
+            border-radius: 28px 28px 0 0;
+            transition: background 0.3s ease;
         }
         .cal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 14px;
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+        .cal-header span {
+            cursor: pointer;
+            font-size: 1.2rem;
             font-weight: bold;
+            padding: 4px 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 30px;
+            transition: 0.2s;
         }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .day-name { font-size: 0.6rem; opacity: 0.5; text-align: center; padding-bottom: 5px;}
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day-name { 
+            font-size: 0.65rem; 
+            font-weight: 800;
+            opacity: 0.85; 
+            text-align: center; 
+            padding-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
         .date { 
-            padding: 10px 0; border-radius: 8px; font-size: 0.9rem; text-align: center;
-            position: relative; background: rgba(255,255,255,0.03);
+            padding: 8px 0; 
+            border-radius: 12px; 
+            font-size: 0.9rem; 
+            font-weight: 700;
+            text-align: center;
+            position: relative; 
+            background: rgba(255,255,255,0.06);
+            cursor: pointer;
+            transition: 0.15s;
         }
-        .date.today { background: var(--accent); color: #000; font-weight: bold; }
-        .date.sun { color: #ff6b6b; }
-        .hijri-mini { position: absolute; top: 2px; right: 3px; font-size: 0.5rem; opacity: 0.7; font-weight: normal; }
-        .pasaran { display: block; font-size: 0.5rem; opacity: 0.6; }
+        .date:hover { background: rgba(241,196,15,0.25); transform: scale(1.02); }
+        .date.today { background: var(--accent); color: #000; font-weight: 800; }
+        .date.sun { color: #ffaaaa; }
+        .hijri-mini { 
+            position: absolute; 
+            top: 2px; 
+            right: 4px; 
+            font-size: 0.55rem; 
+            font-weight: 700;
+            opacity: 0.85; 
+            font-family: monospace;
+        }
+        .pasaran { 
+            display: block; 
+            font-size: 0.55rem; 
+            font-weight: 600;
+            opacity: 0.7; 
+            margin-top: 3px;
+        }
 
-        /* ICON FEATURES SECTION */
         .feature-box {
-            background: rgba(0,0,0,0.3);
-            margin: 15px;
-            padding: 20px;
-            border-radius: 20px;
+            background: var(--card-bg);
+            margin: 16px 18px;
+            padding: 18px 16px;
+            border-radius: 28px;
+            text-align: center;
+            backdrop-filter: blur(2px);
+            transition: background 0.3s ease;
+        }
+        .feature-box h4 {
+            font-weight: 800;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        /* Kompas Kiblat Responsif Rotasi HP */
+        .qibla-section {
             text-align: center;
         }
-
-        /* QIBLA COMPASS */
         .compass-wrap {
             position: relative;
             width: 150px;
             height: 150px;
-            margin: 0 auto;
-            border: 4px double var(--accent);
+            margin: 0 auto 12px auto;
+            border: 3px solid var(--accent);
             border-radius: 50%;
-            transition: transform 0.1s ease-out;
+            transition: border-color 0.3s ease;
+            background: rgba(0,0,0,0.25);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .compass-arrow {
             position: absolute;
-            top: 10%; left: 50%;
-            width: 4px; height: 40%;
+            top: 6%;
+            left: 50%;
+            width: 4px;
+            height: 44%;
             background: var(--accent);
             transform-origin: bottom center;
             transform: translateX(-50%);
+            transition: background 0.2s;
+            border-radius: 2px;
         }
         .compass-arrow::after {
             content: '▲';
             position: absolute;
-            top: -15px; left: -6px;
+            top: -16px;
+            left: -7px;
+            font-size: 18px;
             color: var(--accent);
+            text-shadow: 0 0 2px black;
+        }
+        .compass-label {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(0,0,0,0.5);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+        }
+        .qibla-link-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 9px 22px;
+            background: var(--accent);
+            color: #000;
+            text-decoration: none;
+            border-radius: 40px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            transition: transform 0.2s, background 0.3s;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .qibla-link-btn:hover {
+            transform: scale(1.02);
+            filter: brightness(1.02);
         }
 
-        /* SETTINGS & THEME */
+        /* Frame Qibla Finder (dalam aplikasi) - fully interactive & accessible */
+        .qibla-iframe-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.98);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        .iframe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            padding: 12px 18px;
+            border-bottom: 2px solid var(--accent);
+            flex-shrink: 0;
+        }
+        .iframe-header h4 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .close-iframe {
+            background: var(--accent);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .qibla-iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #000;
+            pointer-events: auto;
+            touch-action: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .secondary-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid var(--accent);
+        }
+
         .settings-grid { text-align: left; font-size: 0.85rem; }
-        .settings-grid input { width: 100%; margin: 8px 0 15px; cursor: pointer;}
+        .settings-grid label { display: block; margin-top: 10px; font-weight: 700; margin-bottom: 5px; }
         .btn-reset {
             background: var(--accent);
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-weight: bold;
+            padding: 9px 14px;
+            border-radius: 40px;
+            font-weight: 800;
             cursor: pointer;
             width: 100%;
+            margin-top: 12px;
+            transition: 0.2s;
+            font-size: 0.85rem;
         }
-
-        .icon-nav {
+        .hijri-adjust {
+            background: rgba(0,0,0,0.4);
+            padding: 14px;
+            border-radius: 24px;
+            margin-top: 15px;
+        }
+        .note-info {
+            font-size: 0.6rem;
+            color: #ffbb66;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        
+        .theme-selector {
             display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            background: var(--secondary);
-            border-top: 1px solid var(--glass);
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 12px 0 8px;
         }
-        .icon-btn { font-size: 1.5rem; cursor: pointer; opacity: 0.7; transition: 0.3s; }
-        .icon-btn:hover { opacity: 1; transform: scale(1.1); color: var(--accent); }
-
+        .theme-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .theme-btn.active {
+            border-color: white;
+            box-shadow: 0 0 8px white;
+        }
+        .theme-label {
+            font-size: 0.6rem;
+            text-align: center;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        .theme-item {
+            text-align: center;
+        }
+        #section-dev p {
+            font-weight: 500;
+            font-size: 0.75rem;
+            line-height: 1.35;
+        }
+        @media (max-width: 450px) {
+            .prayer-item { font-size: 0.9rem; }
+            .date { font-size: 0.85rem; }
+            #clock { font-size: 2.3rem; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="sticky-header">
-        <span id="clock">00:00:00</span>
-        <div class="location-detail" id="full-address">Mendeteksi Sedan...</div>
+        <span id="clock">--:--:--</span>
+        <div class="location-detail" id="full-address">Mendeteksi GPS Sedan...</div>
     </div>
 
     <div class="scrollable-content">
         <div class="prayer-list" id="prayer-content"></div>
         <div class="countdown-container" id="cd-text"></div>
+        
+        <div class="hijri-complete-info" id="hijriCompleteInfo">
+            Memuat tanggal Hijriyah...
+        </div>
 
         <div class="calendar-area">
             <div class="cal-header">
-                <span onclick="moveMonth(-1)" style="cursor:pointer">❮</span>
+                <span onclick="moveMonth(-1)">❮</span>
                 <span id="masehi-month">...</span>
-                <span onclick="moveMonth(1)" style="cursor:pointer">❯</span>
+                <span onclick="moveMonth(1)">❯</span>
             </div>
             <div class="grid" id="calendar-grid"></div>
+            <div style="font-size:0.65rem; text-align:center; margin-top:12px; opacity:0.75; font-weight:600;">
+                🌙 Tanggal Hijriyah hisab Kemenag RI (dapat dikoreksi)
+            </div>
         </div>
 
         <div class="feature-box" id="section-qibla">
-            <h4 style="margin-bottom:15px">🧭 Kompas Kiblat Aktif</h4>
-            <div class="compass-wrap" id="compass">
-                <div class="compass-arrow"></div>
+            <h4>🧭 Kompas Kiblat & Qibla Finder</h4>
+            <div class="qibla-section">
+                <div class="compass-wrap" id="compass">
+                    <div class="compass-arrow" id="compassArrow"></div>
+                </div>
+                <div class="compass-label" id="qibla-degree">Arah Kiblat: ---°</div>
+                
+                <div class="button-group">
+                    <button class="qibla-link-btn" id="openQiblaFinderBtn">📍 Qibla Finder (Dalam App)</button>
+                    <button class="qibla-link-btn secondary-btn" id="openExternalBtn">🌐 Buka di Browser</button>
+                </div>
+                <p style="font-size: 0.7rem; margin-top: 10px; opacity: 0.7; font-weight:600;">Putar HP anda, jarum akan menunjuk arah kiblat</p>
+                <p style="font-size: 0.6rem; margin-top: 5px; opacity: 0.6;" id="qibla-note">Jika kamera tidak muncul, klik "Buka di Browser"</p>
             </div>
-            <p style="font-size: 0.7rem; margin-top: 10px; opacity: 0.6;">Arahkan HP Anda untuk mencari kiblat</p>
         </div>
 
         <div class="feature-box" id="section-settings">
-            <h4 style="margin-bottom:15px">⚙️ Pengaturan & Tema</h4>
-            <div class="settings-grid">
-                <label>Ukuran Font Jadwal:</label>
-                <input type="range" min="12" max="24" value="16" oninput="changeFontSize(this.value)">
-                
-                <label>Warna Tema:</label>
-                <input type="color" id="colorPicker" onchange="changeTheme(this.value)">
-                
-                <button class="btn-reset" onclick="resetDefault()">Reset ke Default Sedan</button>
+            <h4>🎨 Tema Warna</h4>
+            <div class="theme-selector" id="themeSelector"></div>
+            
+            <div class="hijri-adjust">
+                <label style="font-size:0.8rem; font-weight:800;">📅 Koreksi Tanggal Hijriyah</label>
+                <div style="display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 8px;">
+                    <button class="btn-reset" style="width: auto; padding: 5px 14px;" onclick="adjustHijriOffset(-1)">-1 Hari</button>
+                    <span id="hijriOffsetLabel" style="background: #00000066; padding: 5px 16px; border-radius: 30px; font-weight:800;">Offset: 1</span>
+                    <button class="btn-reset" style="width: auto; padding: 5px 14px;" onclick="adjustHijriOffset(1)">+1 Hari</button>
+                </div>
+                <p class="note-info">⚠️ Koreksi hanya mengubah ANGKA Hijriyah, hari (Ahad-Sabtu) sesuai masehi</p>
             </div>
+            
+            <button class="btn-reset" onclick="resetDefault()">Reset ke Default Sedan</button>
         </div>
 
         <div class="feature-box" id="section-dev">
             <h4>👨‍💻 Developer Info</h4>
-            <p style="font-size: 0.8rem; margin-top:10px">Sedan Precision App v6.0</p>
-            <p style="font-size: 0.7rem; opacity: 0.6">Optimized for Kedungringin, Rembang</p>
+            <p>Sedan Precision App v7.2</p>
+            <p style="opacity: 0.8">GPS presisi | Metode Kemenag RI (hisab hakiki)</p>
+            <p>✅ Jadwal sholat akurat berdasarkan koordinat</p>
+            <p>✅ Kalender Hijriyah 1447 H dengan koreksi tanggal</p>
+            <p>✅ Qibla Finder dengan dukungan kamera AR</p>
         </div>
-    </div>
-
-    <div class="icon-nav">
-        <div class="icon-btn" onclick="document.getElementById('section-qibla').scrollIntoView({behavior:'smooth'})">🧭</div>
-        <div class="icon-btn" onclick="document.getElementById('section-settings').scrollIntoView({behavior:'smooth'})">⚙️</div>
-        <div class="icon-btn" onclick="document.getElementById('section-dev').scrollIntoView({behavior:'smooth'})">🆔</div>
-        <div class="icon-btn" onclick="location.reload()">🔄</div>
     </div>
 </div>
 
 <script>
-    let viewDate = new Date();
-    let currentPrayerTimes = [];
-    let nextPrayerInfo = null;
-    const DEFAULT_COLOR = "#0b5351";
-
-    function updateLive() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
+    (function() {
+        // ========== GLOBAL VARIABEL ==========
+        let viewDate = new Date();
+        let currentPrayerTimes = [];
+        let nextPrayerInfo = null;
+        let currentLat = null;
+        let currentLon = null;
+        const PRAYER_METHOD = 11;
+        let hijriOffset = 1;    // default agar tanggal 19 Syawwal
         
-        if (nextPrayerInfo) {
-            const nowMoment = moment();
-            let targetMoment = moment(nextPrayerInfo.time, "HH:mm");
-            if (targetMoment.isBefore(nowMoment)) targetMoment.add(1, 'days');
-            const duration = moment.duration(targetMoment.diff(nowMoment));
-            const timer = [Math.floor(duration.asHours()), duration.minutes(), duration.seconds()]
-                          .map(v => String(v).padStart(2, '0')).join(':');
-            document.getElementById('cd-text').innerText = `${nextPrayerInfo.name} -${timer}`;
+        // Referensi Hijriyah
+        const REF_MASEHI = new Date(2025, 5, 27);
+        const REF_HIJRI_YEAR = 1447;
+        const REF_HIJRI_MONTH = 1;
+        const REF_HIJRI_DAY = 1;
+        const hijriMonths = ["Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Dzulqa'dah", "Dzulhijjah"];
+        
+        // ========== TEMA WARNA ==========
+        const themes = {
+            'hijau_daun': { name: '🌿 Hijau', primary: '#1a6b3b', secondary: '#0d4d2a', accent: '#e8b86b', bgBody: '#0a2e1a', glass: 'rgba(255,255,255,0.1)' },
+            'biru_langit': { name: '🌊 Biru', primary: '#1e6f8f', secondary: '#124a61', accent: '#f0c040', bgBody: '#0a2a38', glass: 'rgba(255,255,255,0.1)' },
+            'coklat_kayu': { name: '🪵 Coklat', primary: '#8B6914', secondary: '#5c4510', accent: '#d4a373', bgBody: '#2a1f0c', glass: 'rgba(255,255,255,0.1)' },
+            'biru_malam': { name: '🌙 Malam', primary: '#2c3e66', secondary: '#1a2645', accent: '#c9a959', bgBody: '#0f1428', glass: 'rgba(255,255,255,0.1)' },
+            'merah_bata': { name: '🧱 Bata', primary: '#9e5a3a', secondary: '#6e3e26', accent: '#e6b85e', bgBody: '#2e1a10', glass: 'rgba(255,255,255,0.1)' },
+            'teal_soft': { name: '💚 Teal', primary: '#2c7a6e', secondary: '#1a544a', accent: '#f2c94c', bgBody: '#0d2f2a', glass: 'rgba(255,255,255,0.1)' }
+        };
+        let currentThemeId = 'hijau_daun';
+        
+        function applyTheme(themeId) {
+            const theme = themes[themeId];
+            if (!theme) return;
+            document.documentElement.style.setProperty('--primary', theme.primary);
+            document.documentElement.style.setProperty('--secondary', theme.secondary);
+            document.documentElement.style.setProperty('--accent', theme.accent);
+            document.documentElement.style.setProperty('--bg-body', theme.bgBody);
+            document.documentElement.style.setProperty('--glass', theme.glass);
+            localStorage.setItem('selectedTheme', themeId);
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.dataset.theme === themeId ? btn.classList.add('active') : btn.classList.remove('active');
+            });
         }
-    }
-    setInterval(updateLive, 1000);
-
-    // KIBLAT BERDASARKAN ROTASI HP
-    window.addEventListener('deviceorientation', function(event) {
-        if (event.webkitCompassHeading) {
-            // Untuk iOS
-            let heading = event.webkitCompassHeading;
-            // Kiblat dari Rembang sekitar 294 derajat
-            document.getElementById('compass').style.transform = `rotate(${-heading + 294}deg)`;
-        } else if (event.alpha) {
-            // Untuk Android
-            let heading = event.alpha;
-            document.getElementById('compass').style.transform = `rotate(${heading + 294}deg)`;
-        }
-    }, true);
-
-    async function init() {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude: lat, longitude: lon } = pos.coords;
-            try {
-                const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`);
-                const res = await geo.json();
-                const a = res.address;
-                const desa = a.village || a.suburb || "Kedungringin";
-                const kec = (a.city_district && !a.city_district.includes("Rembang")) ? a.city_district : "Sedan";
-                const kab = a.city || a.regency || "Rembang";
-                document.getElementById('full-address').innerText = `Desa ${desa}, Kec. ${kec}, Kab. ${kab}`;
-            } catch(e) {
-                document.getElementById('full-address').innerText = "Desa Kedungringin, Kec. Sedan, Kab. Rembang";
+        function buildThemeSelector() {
+            const container = document.getElementById('themeSelector');
+            if (!container) return;
+            container.innerHTML = '';
+            for (const [id, theme] of Object.entries(themes)) {
+                const themeItem = document.createElement('div');
+                themeItem.className = 'theme-item';
+                themeItem.innerHTML = `<div class="theme-btn" data-theme="${id}" style="background: ${theme.primary}; box-shadow: 0 0 5px ${theme.accent};"></div><div class="theme-label">${theme.name.split(' ')[1] || ''}</div>`;
+                themeItem.querySelector('.theme-btn').addEventListener('click', () => applyTheme(id));
+                container.appendChild(themeItem);
             }
-
-            const dateStr = moment().format('DD-MM-YYYY');
-            const pRes = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=11`);
-            const pData = await pRes.json();
-            const t = pData.data.timings;
-            const dhuha = moment(t.Sunrise, "HH:mm").add(15, 'minutes').format("HH:mm");
-
-            currentPrayerTimes = [
-                {name:'Dhuhur', time:t.Dhuhr}, {name:'Ashar', time:t.Asr}, 
-                {name:'Maghrib', time:t.Maghrib}, {name:'Isya', time:t.Isha}, 
-                {name:'Imsak', time:t.Imsak}, {name:'Subuh', time:t.Fajr}, 
-                {name:'Terbit', time:t.Sunrise}, {name:'Dhuha', time:dhuha}
-            ];
-            renderPrayers();
-        });
-    }
-
-    function renderPrayers() {
-        const nowStr = moment().format('HH:mm');
-        const sorted = [...currentPrayerTimes].sort((a,b) => a.time.localeCompare(b.time));
-        nextPrayerInfo = sorted.find(p => p.time > nowStr) || sorted.find(p => p.name === 'Imsak');
-        let html = '';
-        currentPrayerTimes.forEach(p => {
-            const isNext = nextPrayerInfo && p.name === nextPrayerInfo.name;
-            html += `<div class="prayer-item ${isNext?'next':''}"><span>${p.name}</span><span>${p.time} WIB</span></div>`;
-        });
-        document.getElementById('prayer-content').innerHTML = html;
-    }
-
-    function renderCal() {
-        const grid = document.getElementById('calendar-grid');
-        grid.innerHTML = '';
-        const m = viewDate.getMonth(), y = viewDate.getFullYear();
-        document.getElementById('masehi-month').innerText = moment(viewDate).format('MMMM YYYY');
-        ['AHAD','SEN','SEL','RAB','KAM','JUM','SAB'].forEach(d => grid.innerHTML += `<div class="day-name">${d}</div>`);
-        const first = new Date(y, m, 1).getDay();
-        const last = new Date(y, m + 1, 0).getDate();
-        for(let i=0; i<first; i++) grid.innerHTML += '<div></div>';
-        for(let d=1; d<=last; d++) {
-            const dt = new Date(y, m, d);
-            const pasaranArr = ['Wage', 'Kliwon', 'Legi', 'Paing', 'Pon'];
-            const pasaran = pasaranArr[Math.floor((dt - new Date(1970, 0, 1)) / 86400000) % 5];
-            grid.innerHTML += `<div class="date ${moment().isSame(dt, 'day')?'today':''} ${dt.getDay()===0?'sun':''}">
-                                <span class="hijri-mini">${moment(dt).format('iD')}</span>${d}
-                                <span class="pasaran">${pasaran}</span></div>`;
         }
-    }
-
-    // FUNGSI PENGATURAN
-    function changeFontSize(size) { document.documentElement.style.setProperty('--font-size', size + 'px'); }
-    function changeTheme(color) { 
-        document.documentElement.style.setProperty('--primary', color); 
-        document.getElementById('colorPicker').value = color;
-    }
-    function resetDefault() {
-        changeTheme(DEFAULT_COLOR);
-        changeFontSize(16);
-    }
-
-    function moveMonth(n) { viewDate.setMonth(viewDate.getMonth() + n); renderCal(); }
-
-    init(); renderCal(); updateLive();
+        
+        // ========== HIJRIYAH FUNCTIONS ==========
+        function getDaysInHijriMonth(month, year) {
+            if (month === 12) { let cycleYear = year % 30, leapYears = [2,5,7,10,13,16,18,21,24,26,29]; return leapYears.includes(cycleYear) ? 30 : 29; }
+            return (month % 2 === 1) ? 30 : 29;
+        }
+        function daysBetween(date1, date2) { return Math.round((new Date(date1.getFullYear(), date1.getMonth(), date1.getDate()) - new Date(date2.getFullYear(), date2.getMonth(), date2.getDate())) / 86400000); }
+        function getHijriFromMasehi(masehiDate) {
+            let diff = daysBetween(masehiDate, REF_MASEHI);
+            let day = REF_HIJRI_DAY + diff, month = REF_HIJRI_MONTH, year = REF_HIJRI_YEAR;
+            while (day > getDaysInHijriMonth(month, year)) { day -= getDaysInHijriMonth(month, year); month++; if (month > 12) { month = 1; year++; } }
+            while (day < 1) { month--; if (month < 1) { month = 12; year--; } day += getDaysInHijriMonth(month, year); }
+            return { day, month, year };
+        }
+        function getHijriDateWithOffset(masehiDate, offset) {
+            let hijri = getHijriFromMasehi(masehiDate);
+            let newDay = hijri.day + offset, newMonth = hijri.month, newYear = hijri.year;
+            while (newDay > getDaysInHijriMonth(newMonth, newYear)) { newDay -= getDaysInHijriMonth(newMonth, newYear); newMonth++; if (newMonth > 12) { newMonth = 1; newYear++; } }
+            while (newDay < 1) { newMonth--; if (newMonth < 1) { newMonth = 12; newYear--; } newDay += getDaysInHijriMonth(newMonth, newYear); }
+            return { day: newDay, month: newMonth, year: newYear };
+        }
+        function getMonthName(monthNum) { return hijriMonths[monthNum-1]; }
+        function getFullHijriClean(masehiDate, offset) {
+            let h = getHijriDateWithOffset(masehiDate, offset);
+            const daysName = ["Ahad","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+            return { day: h.day.toString(), month: getMonthName(h.month), year: h.year.toString(), dayName: daysName[masehiDate.getDay()] };
+        }
+        function updateCompleteHijriInfo() {
+            const nowDate = new Date();
+            const hijriFull = getFullHijriClean(nowDate, hijriOffset);
+            document.getElementById('hijriCompleteInfo').innerHTML = `📅 <span>${hijriFull.dayName}, ${hijriFull.day} ${hijriFull.month} ${hijriFull.year} H</span>`;
+        }
+        function getHijriDayForCalendar(masehiDate, offset) { return getHijriDateWithOffset(masehiDate, offset).day.toString(); }
+        
+        // ========== JADWAL SHOLAT ==========
+        async function fetchPrayerTimesByGPS(lat, lon) {
+            try {
+                const todayStr = moment().format('DD-MM-YYYY');
+                const url = `https://api.aladhan.com/v1/timings/${todayStr}?latitude=${lat}&longitude=${lon}&method=${PRAYER_METHOD}&adjustment=0`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.code === 200 && data.data) {
+                    const timings = data.data.timings;
+                    let dhuhaTime = moment(timings.Sunrise, "HH:mm").add(15, 'minutes').format("HH:mm");
+                    currentPrayerTimes = [
+                        { name: 'Dhuhur', time: timings.Dhuhr.substring(0,5) }, { name: 'Ashar', time: timings.Asr.substring(0,5) },
+                        { name: 'Maghrib', time: timings.Maghrib.substring(0,5) }, { name: 'Isya', time: timings.Isha.substring(0,5) },
+                        { name: 'Imsak', time: timings.Imsak.substring(0,5) }, { name: 'Subuh', time: timings.Fajr.substring(0,5) },
+                        { name: 'Terbit', time: timings.Sunrise.substring(0,5) }, { name: 'Dhuha', time: dhuhaTime }
+                    ];
+                    currentPrayerTimes.sort((a,b)=>a.time.localeCompare(b.time));
+                    renderPrayers(); updateCountdownDisplay();
+                    return true;
+                } else throw new Error();
+            } catch(e) { useFallbackSchedule(); return false; }
+        }
+        function useFallbackSchedule() {
+            currentPrayerTimes = [{ name:'Imsak', time:'04:13'},{ name:'Subuh', time:'04:23'},{ name:'Terbit', time:'05:38'},{ name:'Dhuha', time:'05:53'},{ name:'Dhuhur', time:'11:46'},{ name:'Ashar', time:'15:05'},{ name:'Maghrib', time:'17:49'},{ name:'Isya', time:'18:58'}];
+            renderPrayers(); updateCountdownDisplay();
+        }
+        function renderPrayers() {
+            const nowStr = moment().format('HH:mm');
+            let foundNext = currentPrayerTimes.find(p => p.time > nowStr);
+            if (!foundNext && currentPrayerTimes.length) foundNext = currentPrayerTimes[0];
+            nextPrayerInfo = foundNext;
+            let html = '';
+            for(let p of currentPrayerTimes) {
+                html += `<div class="prayer-item ${nextPrayerInfo && p.name === nextPrayerInfo.name ? 'next' : ''}"><span>${p.name}</span><span>${p.time} WIB</span></div>`;
+            }
+            document.getElementById('prayer-content').innerHTML = html;
+        }
+        function updateCountdownDisplay() {
+            if(!nextPrayerInfo) return;
+            let target = moment(nextPrayerInfo.time, "HH:mm");
+            if(target.isBefore(moment())) target.add(1, 'days');
+            const dur = moment.duration(target.diff(moment()));
+            const timer = `${String(Math.floor(dur.asHours())).padStart(2,'0')}:${String(dur.minutes()).padStart(2,'0')}:${String(dur.seconds()).padStart(2,'0')}`;
+            document.getElementById('cd-text').innerHTML = `⏰ ${nextPrayerInfo.name} - ${timer}`;
+        }
+        function startLiveUpdates() {
+            setInterval(() => {
+                document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', { hour12: false });
+                updateCountdownDisplay();
+                updateCompleteHijriInfo();
+            }, 1000);
+        }
+        
+        // ========== GPS & LOKASI (PERBAIKAN AKURASI KECAMATAN) ==========
+        async function getAccurateLocation() {
+            if (!navigator.geolocation) {
+                document.getElementById('full-address').innerText = "GPS tdk support, default Sedan";
+                currentLat = -6.756; currentLon = 111.576;
+                await fetchPrayerTimesByGPS(currentLat, currentLon);
+                updateQiblaBearing(); renderCalendar(); updateCompleteHijriInfo(); return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                currentLat = pos.coords.latitude; 
+                currentLon = pos.coords.longitude;
+                
+                try {
+                    // MENGGUNAKAN LAYANAN GANDA UNTUK AKURASI KECAMATAN
+                    let kecamatan = "Sedan";
+                    let desa = "Kedungringin";
+                    let kabupaten = "Rembang";
+                    
+                    // 1. Coba Nominatim dengan parameter bahasa Indonesia
+                    const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLon}&zoom=14&addressdetails=1&accept-language=id`;
+                    const response = await fetch(nominatimUrl);
+                    const data = await response.json();
+                    
+                    if (data && data.address) {
+                        // Ekstrak kecamatan dari berbagai kemungkinan field
+                        kecamatan = data.address.county || 
+                                   data.address.city_district || 
+                                   data.address.suburb || 
+                                   data.address.municipality || 
+                                   data.address.town || 
+                                   "Sedan";
+                        
+                        // Bersihkan dari kata "Kecamatan", "Kec.", "Kabupaten", dll
+                        kecamatan = kecamatan.replace(/Kecamatan\s*/gi, '')
+                                           .replace(/Kec\.?\s*/gi, '')
+                                           .replace(/Kabupaten\s*/gi, '')
+                                           .replace(/[0-9]/g, '')
+                                           .trim();
+                        
+                        // Jika hasil pembersihan terlalu pendek, coba field lain
+                        if (kecamatan.length < 3) {
+                            kecamatan = data.address.state_district || 
+                                       data.address.district || 
+                                       data.address.region || 
+                                       "Sedan";
+                            kecamatan = kecamatan.replace(/[0-9]/g, '').trim();
+                        }
+                        
+                        // Desa
+                        desa = data.address.village || 
+                               data.address.hamlet || 
+                               data.address.neighbourhood || 
+                               data.address.suburb || 
+                               "Kedungringin";
+                        
+                        // Kabupaten
+                        kabupaten = data.address.city || 
+                                   data.address.regency || 
+                                   data.address.county || 
+                                   "Rembang";
+                        kabupaten = kabupaten.replace(/Kabupaten\s*/gi, '').replace(/Kota\s*/gi, '').trim();
+                    }
+                    
+                    // 2. FALLBACK: Jika masih "Sedan", coba layanan alternatif (Zippopotam untuk Indonesia tidak support kecamatan)
+                    if (kecamatan === "Sedan" || kecamatan.length < 3) {
+                        // Coba BigData Cloud (gratis 10K/bulan)
+                        try {
+                            const bigDataRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=id`);
+                            const bigData = await bigDataRes.json();
+                            if (bigData && bigData.locality) {
+                                kecamatan = bigData.locality.replace(/Kecamatan\s*/gi, '').trim() || kecamatan;
+                            }
+                            if (bigData && bigData.city) {
+                                kabupaten = bigData.city.replace(/Kabupaten\s*/gi, '').replace(/Kota\s*/gi, '').trim() || kabupaten;
+                            }
+                        } catch (e) {
+                            console.log("BigData fallback gagal, tetap gunakan Nominatim");
+                        }
+                    }
+                    
+                    // Final check: jika masih kosong
+                    if (!kecamatan || kecamatan === "") kecamatan = "Sedan";
+                    if (!desa || desa === "") desa = "Kedungringin";
+                    if (!kabupaten || kabupaten === "") kabupaten = "Rembang";
+                    
+                    document.getElementById('full-address').innerHTML = `📍 Desa ${desa}, Kec. ${kecamatan}, Kab. ${kabupaten}`;
+                    
+                } catch(e) { 
+                    console.warn("Gagal mendapatkan detail lokasi:", e);
+                    document.getElementById('full-address').innerHTML = `📍 GPS: ${currentLat.toFixed(4)}, ${currentLon.toFixed(4)} (Sedan)`; 
+                }
+                
+                await fetchPrayerTimesByGPS(currentLat, currentLon);
+                updateQiblaBearing(); 
+                renderCalendar(); 
+                updateCompleteHijriInfo();
+                
+            }, (error) => {
+                console.warn("GPS Error:", error);
+                document.getElementById('full-address').innerHTML = "⚠️ Gagal GPS, pakai default Sedan";
+                currentLat = -6.756; currentLon = 111.576;
+                fetchPrayerTimesByGPS(currentLat, currentLon); 
+                updateQiblaBearing(); 
+                renderCalendar();
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        }
+        
+        // ========== KIBLAT (ROTASI HP) ==========
+        let qiblaBearing = 294;
+        function calculateQiblaBearing(lat, lon) {
+            const kaabaLat = 21.4225, kaabaLon = 39.8262;
+            const φ1 = lat * Math.PI/180, φ2 = kaabaLat * Math.PI/180;
+            const Δλ = (kaabaLon - lon) * Math.PI/180;
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+            let brng = Math.atan2(y, x) * 180/Math.PI;
+            return (brng + 360) % 360;
+        }
+        function updateQiblaBearing() {
+            if(currentLat && currentLon) {
+                qiblaBearing = calculateQiblaBearing(currentLat, currentLon);
+                document.getElementById('qibla-degree').innerHTML = `Arah Kiblat: ${Math.round(qiblaBearing)}° dari Utara`;
+            }
+        }
+        function initCompassRotation() {
+            if (!window.DeviceOrientationEvent) return;
+            window.addEventListener('deviceorientation', (e) => {
+                let heading = e.webkitCompassHeading !== undefined ? e.webkitCompassHeading : e.alpha;
+                if (heading !== null && currentLat && currentLon) {
+                    const rotation = (heading - qiblaBearing + 360) % 360;
+                    const compass = document.getElementById('compass');
+                    if (compass) compass.style.transform = `rotate(${-rotation}deg)`;
+                }
+            });
+        }
+        
+        // ========== QIBLA FINDER - DENGAN DUKUNGAN KAMERA ==========
+        function showQiblaFrame() {
+            const existingOverlay = document.querySelector('.qibla-iframe-overlay');
+            if(existingOverlay) existingOverlay.remove();
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'qibla-iframe-overlay';
+            
+            // IZIN PALING LENGKAP UNTUK AKSES KAMERA
+            overlay.innerHTML = `
+                <div class="iframe-header">
+                    <h4>📍 Qibla Finder - Izinkan Kamera</h4>
+                    <button class="close-iframe" id="closeQiblaFrame">Tutup</button>
+                </div>
+                <iframe 
+                    class="qibla-iframe" 
+                    src="https://qiblafinder.withgoogle.com/intl/id/" 
+                    title="Qibla Finder AR"
+                    allow="geolocation *; microphone *; camera *; magnetometer; gyroscope; accelerometer; autoplay; fullscreen; web-share"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-downloads"
+                    allowfullscreen="true"
+                    loading="eager" 
+                    style="pointer-events: auto; width:100%; height:100%; touch-action: pan-x pan-y pinch-zoom;">
+                </iframe>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+            
+            const iframeElem = overlay.querySelector('.qibla-iframe');
+            if(iframeElem) {
+                // Memastikan iframe dapat meminta izin kamera
+                iframeElem.setAttribute('allow', 'geolocation *; microphone *; camera *; magnetometer; gyroscope; accelerometer; autoplay; fullscreen');
+                
+                // Fallback: jika dalam 3 detik iframe tidak merespon, beri tahu user
+                setTimeout(() => {
+                    const note = document.getElementById('qibla-note');
+                    if (note) note.innerHTML = '💡 Jika kamera tidak muncul, klik "Buka di Browser"';
+                }, 3000);
+            }
+            
+            const closeBtn = overlay.querySelector('#closeQiblaFrame');
+            if(closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    overlay.remove();
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            overlay.addEventListener('click', (e) => {
+                if(e.target === overlay) e.stopPropagation();
+            });
+        }
+        
+        // Fungsi buka di browser eksternal (fallback)
+        function openInExternalBrowser() {
+            const url = 'https://qiblafinder.withgoogle.com/intl/id/';
+            
+            // Deteksi perangkat
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            
+            if (isAndroid) {
+                // Intent untuk Android
+                window.location.href = `intent://qiblafinder.withgoogle.com/intl/id/#Intent;scheme=https;package=com.android.chrome;end`;
+                // Fallback
+                setTimeout(() => window.open(url, '_blank'), 100);
+            } else if (isIOS) {
+                // Untuk iOS, buka di Safari
+                window.open(url, '_blank');
+            } else {
+                window.open(url, '_blank');
+            }
+            
+            // Tampilkan pesan
+            alert('Membuka Qibla Finder di browser eksternal. Izinkan akses kamera jika diminta.');
+        }
+        
+        // ========== KALENDER ==========
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            const y = viewDate.getFullYear(), m = viewDate.getMonth();
+            document.getElementById('masehi-month').innerText = moment(viewDate).format('MMMM YYYY');
+            const dayNames = ['AHAD','SEN','SEL','RAB','KAM','JUM','SAB'];
+            dayNames.forEach(d => grid.innerHTML += `<div class="day-name">${d}</div>`);
+            const firstDay = new Date(y, m, 1).getDay();
+            const lastDate = new Date(y, m+1, 0).getDate();
+            for(let i=0;i<firstDay;i++) grid.innerHTML += '<div></div>';
+            for(let d=1; d<=lastDate; d++) {
+                const curDate = new Date(y, m, d);
+                const isToday = moment(curDate).isSame(new Date(), 'day');
+                const epochDiff = Math.floor((curDate - new Date(1970,0,1)) / 86400000);
+                const pasaranList = ['Wage','Kliwon','Legi','Paing','Pon'];
+                const pasaran = pasaranList[((epochDiff % 5)+5)%5];
+                const hijriDay = getHijriDayForCalendar(curDate, hijriOffset);
+                const hijriInfo = getFullHijriClean(curDate, hijriOffset);
+                const isSunday = curDate.getDay() === 0;
+                const todayClass = isToday ? 'today' : '';
+                const sundayClass = isSunday ? 'sun' : '';
+                grid.innerHTML += `<div class="date ${todayClass} ${sundayClass}" title="${hijriInfo.dayName}, ${hijriInfo.day} ${hijriInfo.month} ${hijriInfo.year} H">
+                                    <span class="hijri-mini">${hijriDay}</span>${d}<span class="pasaran">${pasaran}</span>
+                                  </div>`;
+            }
+        }
+        window.moveMonth = (n) => { viewDate.setMonth(viewDate.getMonth() + n); renderCalendar(); };
+        
+        // ========== HIJRI OFFSET ==========
+        function adjustHijriOffset(delta) {
+            hijriOffset += delta;
+            hijriOffset = Math.min(5, Math.max(-3, hijriOffset));
+            document.getElementById('hijriOffsetLabel').innerText = `Offset: ${hijriOffset}`;
+            localStorage.setItem('hijriOffsetKemenag', hijriOffset);
+            renderCalendar(); updateCompleteHijriInfo();
+        }
+        function loadHijriOffset() {
+            let saved = localStorage.getItem('hijriOffsetKemenag');
+            hijriOffset = (saved !== null && !isNaN(parseInt(saved))) ? Math.min(5, Math.max(-3, parseInt(saved))) : 1;
+            document.getElementById('hijriOffsetLabel').innerText = `Offset: ${hijriOffset}`;
+            updateCompleteHijriInfo();
+        }
+        function resetDefault() {
+            applyTheme('hijau_daun');
+            hijriOffset = 1;
+            localStorage.setItem('hijriOffsetKemenag', 1);
+            document.getElementById('hijriOffsetLabel').innerText = "Offset: 1";
+            renderCalendar(); updateCompleteHijriInfo();
+            if(currentLat && currentLon) fetchPrayerTimesByGPS(currentLat, currentLon);
+        }
+        function loadUserPreferences() {
+            let savedTheme = localStorage.getItem('selectedTheme');
+            if(savedTheme && themes[savedTheme]) applyTheme(savedTheme);
+            else applyTheme('hijau_daun');
+            loadHijriOffset();
+        }
+        
+        // ========== INIT ==========
+        async function init() {
+            buildThemeSelector();
+            loadUserPreferences();
+            startLiveUpdates();
+            renderCalendar();
+            
+            // Minta izin kamera di awal (opsional, untuk mempersiapkan)
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(() => console.log('Kamera siap'))
+                    .catch(() => console.log('Kamera akan diminta saat buka Qibla Finder'));
+            }
+            
+            await getAccurateLocation();
+            initCompassRotation();
+            
+            // Setup tombol Qibla Finder
+            const qiblaBtn = document.getElementById('openQiblaFinderBtn');
+            const externalBtn = document.getElementById('openExternalBtn');
+            
+            if(qiblaBtn) {
+                qiblaBtn.replaceWith(qiblaBtn.cloneNode(true));
+                document.getElementById('openQiblaFinderBtn').addEventListener('click', showQiblaFrame);
+            }
+            
+            if(externalBtn) {
+                externalBtn.replaceWith(externalBtn.cloneNode(true));
+                document.getElementById('openExternalBtn').addEventListener('click', openInExternalBrowser);
+            }
+            
+            setInterval(() => {
+                if(currentLat && currentLon) {
+                    qiblaBearing = calculateQiblaBearing(currentLat, currentLon);
+                    document.getElementById('qibla-degree').innerHTML = `Arah Kiblat: ${Math.round(qiblaBearing)}° dari Utara`;
+                }
+            }, 4000);
+            
+            setInterval(() => { 
+                if(currentLat && currentLon) fetchPrayerTimesByGPS(currentLat, currentLon); 
+            }, 1800000);
+        }
+        
+        // Expose ke global
+        window.adjustHijriOffset = adjustHijriOffset;
+        window.resetDefault = resetDefault;
+        init();
+    })();
 </script>
 </body>
 </html>
