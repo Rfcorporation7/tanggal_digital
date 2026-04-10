@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Salat Sedan Pro v8.1 - Geocoding Akurat</title>
+    <title>Salat Sedan Pro v9.0 - Jadwal Sholat Akurat Digital Falak</title>
     
     <meta http-equiv="Permissions-Policy" content="geolocation=*, microphone=*, camera=*, magnetometer=*, gyroscope=*, accelerometer=*">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-hijri/2.1.2/moment-hijri.min.js"></script>
     <style>
-        /* Root variables */
         :root {
             --primary: #0b5351;
             --secondary: #00302e;
@@ -31,7 +30,6 @@
             justify-content: center;
             height: 100vh;
             overflow: hidden;
-            transition: background-color 0.3s ease;
             font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
             font-weight: 500;
             font-size: var(--font-normal);
@@ -205,7 +203,6 @@
             margin-bottom: 12px;
         }
 
-        /* Kompas Kiblat */
         .compass-wrap {
             position: relative;
             width: 180px;
@@ -292,7 +289,6 @@
             cursor: pointer;
         }
 
-        /* Qibla Finder Overlay */
         .qibla-iframe-overlay {
             position: fixed;
             top: 0;
@@ -388,7 +384,6 @@
             font-weight: 600;
         }
         
-        /* Toggle Switch - Diperbaiki */
         .location-toggle-container {
             display: flex;
             align-items: center;
@@ -443,6 +438,12 @@
         @media (max-width: 450px) {
             #clock { font-size: 2.3rem; }
         }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -454,7 +455,9 @@
     </div>
 
     <div class="scrollable-content">
-        <div class="prayer-list" id="prayer-content"></div>
+        <div class="prayer-list" id="prayer-content">
+            <div class="loading">⏳ Memuat jadwal sholat...</div>
+        </div>
         <div class="countdown-container" id="cd-text"></div>
         
         <div class="hijri-complete-info" id="hijriCompleteInfo">Memuat tanggal Hijriyah...</div>
@@ -517,9 +520,11 @@
 
         <div class="feature-box" id="section-dev">
             <h4>👨‍💻 Developer Info</h4>
-            <p>Sedan Precision App v8.1</p>
-            <p>✅ Jadwal Kemenag RI | ✅ Kompas Kiblat</p>
-            <p>✅ Geocoding 3 Layanan (Akurat)</p>
+            <p>Sedan Precision App v9.0</p>
+            <p>✅ Jadwal API Digital Falak (Koreksi: Dhuha +8 | Wajib -4)</p>
+            <p>✅ Kompas Kiblat Real-time</p>
+            <p>✅ Geocoding Nominatim OSM (Akurasi Desa & Kabupaten)</p>
+            <p>✅ Koreksi Waktu: Dhuha +8 menit | Dzuhur, Ashar, Maghrib, Isya -4 menit</p>
         </div>
     </div>
 </div>
@@ -539,7 +544,6 @@
         
         let locationData = {
             desa: '',
-            kecamatan: '',
             kabupaten: '',
             provinsi: ''
         };
@@ -622,43 +626,108 @@
         }
         function getHijriDayForCalendar(masehiDate, offset) { return getHijriDateWithOffset(masehiDate, offset).day.toString(); }
         
-        // ========== JADWAL SHOLAT ==========
+        // ========== FUNGSI KOREKSI WAKTU ==========
+        function addMinutesToTime(timeStr, minutesToAdd) {
+            if (!timeStr || timeStr === '--:--') return '--:--';
+            let [hours, minutes] = timeStr.split(':').map(Number);
+            let totalMinutes = hours * 60 + minutes + minutesToAdd;
+            let newHours = Math.floor(totalMinutes / 60) % 24;
+            let newMinutes = totalMinutes % 60;
+            if (newHours < 0) newHours += 24;
+            if (newMinutes < 0) newMinutes += 60;
+            return `${String(newHours).padStart(2, '0')}:${String(newMinutes).padStart(2, '0')}`;
+        }
+        
+        // ========== JADWAL SHOLAT DARI DIGITAL FALAK DENGAN KOREKSI ==========
         async function fetchPrayerTimesByGPS(lat, lon) {
             try {
-                const cityRes = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${lat}/${lon}`);
-                const cityData = await cityRes.json();
-                let cityId = cityData.status && cityData.data?.id ? cityData.data.id : '0314';
+                const today = new Date();
+                const tgl = today.getDate();
+                const bln = today.getMonth() + 1;
+                const tz = 7; // WIB
                 
-                const year = moment().format('YYYY'), month = moment().format('MM');
-                const jadwalRes = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${year}/${month}`);
-                const jadwalData = await jadwalRes.json();
+                const url = `https://digitalfalak.com/api.php?tgl=${tgl}&bln=${bln}&lat=${lat}&lon=${lon}&tz=${tz}`;
                 
-                if (jadwalData.status && jadwalData.data?.jadwal) {
-                    const today = moment().date();
-                    const todayJadwal = jadwalData.data.jadwal.find(j => parseInt(j.tanggal) === today);
-                    if (todayJadwal) {
-                        currentPrayerTimes = [
-                            { name: 'Imsak', time: todayJadwal.imsak }, { name: 'Subuh', time: todayJadwal.subuh },
-                            { name: 'Terbit', time: todayJadwal.terbit }, { name: 'Dhuha', time: todayJadwal.dhuha },
-                            { name: 'Dzuhur', time: todayJadwal.dzuhur }, { name: 'Ashar', time: todayJadwal.ashar },
-                            { name: 'Maghrib', time: todayJadwal.maghrib }, { name: 'Isya', time: todayJadwal.isya }
-                        ];
-                        currentPrayerTimes.sort((a,b)=>a.time.localeCompare(b.time));
-                        renderPrayers(); updateCountdownDisplay();
-                        return true;
+                console.log(`Mengambil jadwal dari Digital Falak: ${url}`);
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data && data.status === 'success' && data.data) {
+                    const jadwal = data.data;
+                    
+                    function formatTime(timeStr) {
+                        if (!timeStr) return '--:--';
+                        let cleanTime = timeStr.toString().replace(/[^0-9:]/g, '');
+                        if (cleanTime.length === 5) return cleanTime;
+                        if (cleanTime.length === 4) return `0${cleanTime}`;
+                        if (cleanTime.length === 7) return cleanTime.substring(0, 5);
+                        return cleanTime.substring(0, 5);
                     }
+                    
+                    // Ambil waktu asli dari API
+                    let imsakRaw = formatTime(jadwal.Imsak || jadwal.imsak);
+                    let subuhRaw = formatTime(jadwal.Subuh || jadwal.Fajr || jadwal.fajr);
+                    let terbitRaw = formatTime(jadwal.Syuruq || jadwal.Terbit || jadwal.sunrise);
+                    let dzuhurRaw = formatTime(jadwal.Dzuhur || jadwal.Dhuhr || jadwal.dhuhr);
+                    let asharRaw = formatTime(jadwal.Ashar || jadwal.Asr || jadwal.asr);
+                    let maghribRaw = formatTime(jadwal.Maghrib || jadwal.maghrib);
+                    let isyaRaw = formatTime(jadwal.Isya || jadwal.Isha || jadwal.isha);
+                    
+                    // KOREKSI WAKTU:
+                    // Dhuha: +8 menit DARI TERBIT
+                    let dhuhaTime = '--:--';
+                    if (terbitRaw && terbitRaw !== '--:--') {
+                        dhuhaTime = addMinutesToTime(terbitRaw, 8);
+                    }
+                    
+                    // Dzuhur, Ashar, Maghrib, Isya: DIKURANGI 4 MENIT
+                    let dzuhurCorrected = addMinutesToTime(dzuhurRaw, -4);
+                    let asharCorrected = addMinutesToTime(asharRaw, -4);
+                    let maghribCorrected = addMinutesToTime(maghribRaw, -4);
+                    let isyaCorrected = addMinutesToTime(isyaRaw, -4);
+                    
+                    const rawTimes = [
+                        { name: 'Imsak', time: imsakRaw },
+                        { name: 'Subuh', time: subuhRaw },
+                        { name: 'Terbit', time: terbitRaw },
+                        { name: 'Dhuha', time: dhuhaTime },
+                        { name: 'Dzuhur', time: dzuhurCorrected },
+                        { name: 'Ashar', time: asharCorrected },
+                        { name: 'Maghrib', time: maghribCorrected },
+                        { name: 'Isya', time: isyaCorrected }
+                    ];
+                    
+                    currentPrayerTimes = rawTimes.filter(p => p.time && p.time !== '--:--' && p.time !== 'NaN:NaN');
+                    currentPrayerTimes.sort((a,b) => a.time.localeCompare(b.time));
+                    
+                    console.log('Jadwal sholat Digital Falak dengan koreksi:', currentPrayerTimes);
+                    renderPrayers();
+                    updateCountdownDisplay();
+                    return true;
+                } else {
+                    throw new Error('Response Digital Falak tidak valid');
                 }
-                throw new Error('Data tidak ditemukan');
-            } catch(e) { useFallbackSchedule(); return false; }
+            } catch(e) {
+                console.error('Error fetching from Digital Falak:', e);
+                useFallbackSchedule();
+                return false;
+            }
         }
         
         function useFallbackSchedule() {
             currentPrayerTimes = [
-                { name:'Imsak', time:'04:10'},{ name:'Subuh', time:'04:20'},{ name:'Terbit', time:'05:34'},
-                { name:'Dhuha', time:'05:58'},{ name:'Dzuhur', time:'11:42'},{ name:'Ashar', time:'14:57'},
-                { name:'Maghrib', time:'17:42'},{ name:'Isya', time:'18:51'}
+                { name:'Imsak', time:'04:10'},
+                { name:'Subuh', time:'04:20'},
+                { name:'Terbit', time:'05:34'},
+                { name:'Dhuha', time:'05:42'},
+                { name:'Dzuhur', time:'11:38'},
+                { name:'Ashar', time:'14:56'},
+                { name:'Maghrib', time:'17:38'},
+                { name:'Isya', time:'18:48'}
             ];
-            renderPrayers(); updateCountdownDisplay();
+            console.log('Menggunakan jadwal fallback');
+            renderPrayers();
+            updateCountdownDisplay();
         }
         
         function renderPrayers() {
@@ -667,7 +736,8 @@
             nextPrayerInfo = foundNext;
             let html = '';
             for(let p of currentPrayerTimes) {
-                html += `<div class="prayer-item ${nextPrayerInfo && p.name === nextPrayerInfo.name ? 'next' : ''}"><span>${p.name}</span><span>${p.time} WIB</span></div>`;
+                const isNext = nextPrayerInfo && p.name === nextPrayerInfo.name;
+                html += `<div class="prayer-item ${isNext ? 'next' : ''}"><span>${p.name}</span><span>${p.time} WIB</span></div>`;
             }
             document.getElementById('prayer-content').innerHTML = html;
         }
@@ -689,14 +759,128 @@
             }, 1000);
         }
         
-        // ========== LOKASI ==========
+        // ========== FUNGSI GEOCODING YANG DIPERBAIKI (KECAMATAN DIHAPUS) ==========
+        async function getAccurateLocation() {
+            if (!navigator.geolocation) {
+                setDefaultLocation();
+                return;
+            }
+            
+            document.getElementById('full-address').innerHTML = "📍 Mengambil lokasi GPS...";
+            
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                currentLat = pos.coords.latitude; 
+                currentLon = pos.coords.longitude;
+                
+                console.log(`Koordinat GPS: ${currentLat}, ${currentLon}`);
+                
+                locationData = { desa: '', kabupaten: '', provinsi: '' };
+                
+                try {
+                    // Gunakan Nominatim dengan parameter yang lebih lengkap
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLon}&zoom=13&addressdetails=1&accept-language=id&namedetails=1&extratags=1`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    
+                    console.log('Response Nominatim:', data);
+                    
+                    if (data && data.address) {
+                        const addr = data.address;
+                        
+                        // PRIORITAS UNTUK DESA/KELURAHAN
+                        locationData.desa = addr.village || 
+                                           addr.suburb || 
+                                           addr.neighbourhood || 
+                                           addr.city_district || 
+                                           addr.hamlet || 
+                                           addr.town || 
+                                           '';
+                        
+                        // PRIORITAS UNTUK KABUPATEN/KOTA (kecamatan dihilangkan)
+                        locationData.kabupaten = 
+                                                addr.county || 
+                                                addr.state_district || 
+                                                addr.district || 
+                                                addr.municipality || 
+                                                '';
+                        
+                        // PRIORITAS UNTUK PROVINSI
+                        locationData.provinsi = addr.state || '';
+                        
+                        // Bersihkan dari kata administratif
+                        locationData.desa = locationData.desa.replace(/^(Desa|Kelurahan|Kecamatan|Kabupaten|Kota)\s*/gi, '').trim();
+                        locationData.kabupaten = locationData.kabupaten.replace(/^(Kabupaten|Kota)\s*/gi, '').trim();
+                        locationData.provinsi = locationData.provinsi.replace(/^Provinsi\s*/gi, '').trim();
+                        
+                        // Log untuk debugging
+                        console.log('Parsed Location (tanpa kecamatan):', {
+                            desa: locationData.desa,
+                            kabupaten: locationData.kabupaten,
+                            provinsi: locationData.provinsi
+                        });
+                    }
+                } catch (e) { 
+                    console.warn('Nominatim gagal:', e);
+                }
+                
+                // Fallback jika data kosong
+                if (!locationData.desa) locationData.desa = 'Lokasi GPS';
+                if (!locationData.kabupaten) locationData.kabupaten = 'Kabupaten';
+                if (!locationData.provinsi) locationData.provinsi = 'Indonesia';
+                
+                updateLocationDisplay();
+                
+                await fetchPrayerTimesByGPS(currentLat, currentLon);
+                updateQiblaBearing(); 
+                renderCalendar(); 
+                updateCompleteHijriInfo();
+                
+            }, (error) => {
+                console.warn('Geolocation error:', error);
+                let errorMsg = "Gagal mengambil lokasi";
+                if (error.code === 1) errorMsg = "Ijin lokasi ditolak";
+                if (error.code === 2) errorMsg = "Lokasi tidak tersedia";
+                if (error.code === 3) errorMsg = "Timeout mengambil lokasi";
+                document.getElementById('full-address').innerHTML = `📍 ${errorMsg}, menggunakan default`;
+                setDefaultLocation();
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }
+        
+        function setDefaultLocation() {
+            currentLat = -6.756; 
+            currentLon = 111.576;
+            locationData = { 
+                desa: 'Kedungringin', 
+                kabupaten: 'Rembang', 
+                provinsi: 'Jawa Tengah' 
+            };
+            updateLocationDisplay();
+            fetchPrayerTimesByGPS(currentLat, currentLon);
+            updateQiblaBearing(); 
+            renderCalendar();
+        }
+        
         function updateLocationDisplay() {
             const el = document.getElementById('full-address');
             if (!el) return;
+            
+            // Bersihkan nama agar tidak ada kata ganda
+            let desaClean = locationData.desa;
+            let kabupatenClean = locationData.kabupaten;
+            let provinsiClean = locationData.provinsi;
+            
             if (showFullLocation) {
-                el.innerHTML = `📍 ${locationData.desa}, Kec. ${locationData.kecamatan}, Kab. ${locationData.kabupaten}, Prov. ${locationData.provinsi}`;
+                if (kabupatenClean) {
+                    el.innerHTML = `📍 ${desaClean}, Kab. ${kabupatenClean}, ${provinsiClean}`;
+                } else {
+                    el.innerHTML = `📍 ${desaClean}, ${provinsiClean}`;
+                }
             } else {
-                el.innerHTML = `📍 ${locationData.desa}, Kab. ${locationData.kabupaten}`;
+                if (kabupatenClean) {
+                    el.innerHTML = `📍 ${desaClean}, ${kabupatenClean}`;
+                } else {
+                    el.innerHTML = `📍 ${desaClean}`;
+                }
             }
         }
         
@@ -717,108 +901,6 @@
                 localStorage.setItem('showFullLocation', showFullLocation);
                 updateLocationDisplay();
             });
-        }
-        
-        // ========== GPS & GEOCODING 3 LAYANAN (AKURAT) ==========
-        async function getAccurateLocation() {
-            if (!navigator.geolocation) {
-                setDefaultLocation();
-                return;
-            }
-            
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                currentLat = pos.coords.latitude; 
-                currentLon = pos.coords.longitude;
-                
-                // Reset data
-                locationData = { desa: '', kecamatan: '', kabupaten: '', provinsi: '' };
-                
-                // Layanan 1: Nominatim OSM (zoom 18 untuk akurasi tertinggi)
-                try {
-                    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLon}&zoom=18&addressdetails=1&accept-language=id`;
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    
-                    if (data && data.address) {
-                        locationData.desa = data.address.village || data.address.hamlet || data.address.neighbourhood || '';
-                        locationData.kecamatan = data.address.county || data.address.city_district || data.address.municipality || data.address.town || '';
-                        locationData.kabupaten = data.address.city || data.address.regency || data.address.county || '';
-                        locationData.provinsi = data.address.state || data.address.province || '';
-                        
-                        // Bersihkan
-                        locationData.desa = locationData.desa.replace(/Desa\s*/gi, '').trim();
-                        locationData.kecamatan = locationData.kecamatan.replace(/Kecamatan\s*/gi, '').replace(/Kec\.?\s*/gi, '').replace(/[0-9]/g, '').trim();
-                        locationData.kabupaten = locationData.kabupaten.replace(/Kabupaten\s*/gi, '').replace(/Kota\s*/gi, '').trim();
-                        locationData.provinsi = locationData.provinsi.replace(/Provinsi\s*/gi, '').trim();
-                    }
-                } catch (e) { console.warn('Nominatim gagal'); }
-                
-                // Layanan 2: BigDataCloud (fallback)
-                if (!locationData.kecamatan || locationData.kecamatan.length < 3) {
-                    try {
-                        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=id`);
-                        const data = await res.json();
-                        if (data) {
-                            if (!locationData.kecamatan || locationData.kecamatan.length < 3) {
-                                let kec = data.locality || data.city || '';
-                                kec = kec.replace(/Kecamatan\s*/gi, '').replace(/Kec\.?\s*/gi, '').replace(/[0-9]/g, '').trim();
-                                if (kec && kec.length >= 3) locationData.kecamatan = kec;
-                            }
-                            if (!locationData.kabupaten && data.principalSubdivision) {
-                                locationData.kabupaten = data.principalSubdivision.replace(/Kabupaten\s*/gi, '').replace(/Kota\s*/gi, '').trim();
-                            }
-                            if (!locationData.provincia && data.countryName) {
-                                // BigDataCloud tidak selalu punya province, skip
-                            }
-                        }
-                    } catch (e) { console.warn('BigDataCloud gagal'); }
-                }
-                
-                // Layanan 3: GeoNames (fallback terakhir)
-                if (!locationData.kecamatan || locationData.kecamatan.length < 3) {
-                    try {
-                        const res = await fetch(`https://secure.geonames.org/findNearbyPlaceNameJSON?lat=${currentLat}&lng=${currentLon}&username=sedan_app&style=full`);
-                        const data = await res.json();
-                        if (data && data.geonames && data.geonames.length > 0) {
-                            const place = data.geonames[0];
-                            if (!locationData.kecamatan && place.adminName2) {
-                                let kec = place.adminName2.replace(/Kecamatan\s*/gi, '').trim();
-                                if (kec && kec.length >= 3) locationData.kecamatan = kec;
-                            }
-                            if (!locationData.kabupaten && place.adminName1) {
-                                locationData.kabupaten = place.adminName1.replace(/Kabupaten\s*/gi, '').replace(/Kota\s*/gi, '').trim();
-                            }
-                            if (!locationData.provinsi && place.adminName1) {
-                                locationData.provinsi = place.adminName1.replace(/Provinsi\s*/gi, '').trim();
-                            }
-                        }
-                    } catch (e) { console.warn('GeoNames gagal'); }
-                }
-                
-                // Fallback final jika semua gagal
-                if (!locationData.desa) locationData.desa = 'Lokasi';
-                if (!locationData.kecamatan || locationData.kecamatan.length < 3) locationData.kecamatan = 'Sedan';
-                if (!locationData.kabupaten) locationData.kabupaten = 'Rembang';
-                if (!locationData.provinsi) locationData.provinsi = 'Jawa Tengah';
-                
-                updateLocationDisplay();
-                await fetchPrayerTimesByGPS(currentLat, currentLon);
-                updateQiblaBearing(); 
-                renderCalendar(); 
-                updateCompleteHijriInfo();
-                
-            }, (error) => {
-                setDefaultLocation();
-            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
-        }
-        
-        function setDefaultLocation() {
-            currentLat = -6.756; currentLon = 111.576;
-            locationData = { desa: 'Kedungringin', kecamatan: 'Sedan', kabupaten: 'Rembang', provinsi: 'Jawa Tengah' };
-            updateLocationDisplay();
-            fetchPrayerTimesByGPS(currentLat, currentLon);
-            updateQiblaBearing(); 
-            renderCalendar();
         }
         
         // ========== KIBLAT ==========
@@ -850,7 +932,10 @@
         async function initCompassRotation() {
             if (typeof DeviceOrientationEvent !== 'undefined') {
                 if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    try { if (await DeviceOrientationEvent.requestPermission() === 'granted') startOrientationListener(); } catch (e) {}
+                    try { 
+                        if (await DeviceOrientationEvent.requestPermission() === 'granted') 
+                            startOrientationListener(); 
+                    } catch (e) {}
                 } else startOrientationListener();
             }
         }
@@ -917,11 +1002,14 @@
             localStorage.setItem('hijriOffsetKemenag', hijriOffset);
             renderCalendar(); updateCompleteHijriInfo();
         }
+        window.adjustHijriOffset = adjustHijriOffset;
+        
         function loadHijriOffset() {
             let saved = localStorage.getItem('hijriOffsetKemenag');
             hijriOffset = (saved && !isNaN(parseInt(saved))) ? Math.min(5, Math.max(-3, parseInt(saved))) : 1;
             document.getElementById('hijriOffsetLabel').innerText = `Offset: ${hijriOffset}`;
         }
+        
         function resetDefault() {
             applyTheme('hijau_daun');
             hijriOffset = 1;
@@ -929,16 +1017,20 @@
             localStorage.setItem('hijriOffsetKemenag', 1);
             localStorage.setItem('showFullLocation', false);
             document.getElementById('hijriOffsetLabel').innerText = "Offset: 1";
-            document.getElementById('locationToggle').classList.remove('active');
+            const toggle = document.getElementById('locationToggle');
+            if (toggle) toggle.classList.remove('active');
             updateLocationDisplay();
-            renderCalendar(); updateCompleteHijriInfo();
+            renderCalendar(); 
+            updateCompleteHijriInfo();
             if(currentLat && currentLon) fetchPrayerTimesByGPS(currentLat, currentLon);
         }
+        window.resetDefault = resetDefault;
         
         // ========== INIT ==========
         async function init() {
             buildThemeSelector();
-            applyTheme(localStorage.getItem('selectedTheme') || 'hijau_daun');
+            const savedTheme = localStorage.getItem('selectedTheme');
+            applyTheme(savedTheme && themes[savedTheme] ? savedTheme : 'hijau_daun');
             loadHijriOffset();
             updateCompleteHijriInfo();
             initLocationToggle();
@@ -951,11 +1043,9 @@
             document.getElementById('openExternalBtn').addEventListener('click', openInExternalBrowser);
             
             setInterval(() => { if(currentLat && currentLon) updateQiblaBearing(); }, 1000);
-            setInterval(() => { if(currentLat && currentLon) fetchPrayerTimesByGPS(currentLat, currentLon); }, 1800000);
+            setInterval(() => { if(currentLat && currentLon) fetchPrayerTimesByGPS(currentLat, currentLon); }, 3600000);
         }
         
-        window.adjustHijriOffset = adjustHijriOffset;
-        window.resetDefault = resetDefault;
         init();
     })();
 </script>
